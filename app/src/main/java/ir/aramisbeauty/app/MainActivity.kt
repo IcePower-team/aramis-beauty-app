@@ -76,11 +76,16 @@ class MainActivity : AppCompatActivity() {
                 val url = request.url.toString()
                 val host = request.url.host ?: ""
                 // Payment gateways stay INSIDE the app's WebView: opening the
-                // Zarinpal URL in an external browser strips the navigation
-                // context (no referer from the shop), and Zarinpal rejects it
-                // with "access from this domain is not allowed".
+                // payment URL in an external browser strips the navigation
+                // context (no referer from the shop), and the gateway rejects
+                // it with "access from this domain is not allowed".
+                // The chain is: shop -> zarinpal.com -> sep.shaparak.ir
+                // (Shaparak switch) -> the card's bank PSP (*.shaparak.ir)
+                // -> back to the shop, so every *.shaparak.ir host must stay
+                // in-app too, or the payment page pops out to the browser.
                 return if (host == "aramis-beauty.ir" || host.endsWith(".aramis-beauty.ir")
-                    || host.endsWith("zarinpal.com") || host.endsWith("snapppay.ir")) {
+                    || host.endsWith("zarinpal.com") || host.endsWith("snapppay.ir")
+                    || host == "shaparak.ir" || host.endsWith(".shaparak.ir")) {
                     false // stay inside the app
                 } else {
                     openExternal(url)
