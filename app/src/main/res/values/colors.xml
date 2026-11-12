@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="burgundy">#6E0B28</color>
+    <color name="burgundy_dark">#4A0819</color>
+    <color name="burgundy_light">#8E1538</color>
+    <color name="gold">#C9A227</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#1A1A1A</color>
+    <color name="gray_text">#666666</color>
+    <color name="telegram_blue">#26A5E4</color>
+    <color name="instagram_pink">#E1306C</color>
+    <color name="rubika_purple">#794387</color>
+</resources>

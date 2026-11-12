@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">آرامیس بیوتی</string>
+    <string name="navigation_drawer_open">باز کردن منو</string>
+    <string name="navigation_drawer_close">بستن منو</string>
+    <string name="toolbar_title">آرامیس بیوتی</string>
+    <string name="login">ورود</string>
+    <string name="register">عضویت</string>
+    <string name="nav_home">خانه</string>
+    <string name="nav_cart">سبد خرید</string>
+    <string name="nav_categories">دسته‌بندی‌ها</string>
+    <string name="nav_makeup_face">آرایش صورت</string>
+    <string name="nav_makeup_eyes">آرایش چشم</string>
+    <string name="nav_makeup_brows">آرایش ابرو</string>
+    <string name="nav_makeup_lips">آرایش لب</string>
+    <string name="nav_makeup_hair">آرایش مو</string>
+    <string name="nav_skincare">مراقبت از پوست</string>
+    <string name="nav_lens">لنز چشم</string>
+    <string name="nav_bracelet">دستبند</string>
+    <string name="nav_necklace">گردنبند</string>
+    <string name="nav_ring">انگشتر</string>
+    <string name="nav_watch">ساعت</string>
+    <string name="social_telegram">تلگرام</string>
+    <string name="social_rubika">روبیکا</string>
+    <string name="social_instagram">اینستاگرام</string>
+</resources>
