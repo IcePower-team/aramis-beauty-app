@@ -10,7 +10,7 @@
     </style>
 
     <style name="Theme.AramisBeauty.Starting" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/burgundy</item>
+        <item name="windowSplashScreenBackground">@color/black</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="windowSplashScreenAnimationDuration">800</item>
         <item name="postSplashScreenTheme">@style/Theme.AramisBeauty</item>

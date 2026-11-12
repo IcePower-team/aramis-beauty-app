@@ -3,6 +3,8 @@
     <string name="app_name">آرامیس بیوتی</string>
     <string name="navigation_drawer_open">باز کردن منو</string>
     <string name="navigation_drawer_close">بستن منو</string>
+    <string name="search">جستجو</string>
+    <string name="search_hint">در اینجا جستجو کنید…</string>
     <string name="toolbar_title">آرامیس بیوتی</string>
     <string name="login">ورود</string>
     <string name="register">عضویت</string>

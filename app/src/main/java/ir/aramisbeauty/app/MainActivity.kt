@@ -3,6 +3,7 @@ package ir.aramisbeauty.app
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.webkit.CookieManager
@@ -12,6 +13,9 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
 import android.widget.ImageButton
+import android.widget.ImageView
+import androidx.appcompat.widget.SearchView
+import java.net.URLEncoder
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -31,6 +35,10 @@ class MainActivity : AppCompatActivity() {
         const val TELEGRAM_URL = "https://t.me/AramisBeauty_Ch"
         const val RUBIKA_URL = "https://rubika.ir/joing/HCIBADFA0JCEETLQHXTIJKEXVSMCNMYU"
         const val INSTAGRAM_URL = "https://www.instagram.com/aramisbeauty.shop"
+        // Payment gateways open in the system browser: Zarinpal's page checks the
+        // real browser environment (referer / user agent) and rejects embedded
+        // WebViews with a domain error, so the gateway must not run inside the app.
+        val PAYMENT_HOSTS = setOf("zarinpal.com", "www.zarinpal.com", "snapppay.ir", "www.snapppay.ir")
     }
 
     private lateinit var drawer: DrawerLayout
@@ -45,6 +53,7 @@ class MainActivity : AppCompatActivity() {
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar?.setDisplayShowTitleEnabled(false)
+        findViewById<ImageView>(R.id.toolbar_logo).setOnClickListener { loadUrl(HOME_URL) }
 
         drawer = findViewById(R.id.drawer_layout)
         val toggle = ActionBarDrawerToggle(
@@ -71,11 +80,18 @@ class MainActivity : AppCompatActivity() {
             ): Boolean {
                 val url = request.url.toString()
                 val host = request.url.host ?: ""
-                return if (host == "aramis-beauty.ir" || host.endsWith(".aramis-beauty.ir")) {
-                    false // stay inside the app
-                } else {
-                    openExternal(url)
-                    true
+                return when {
+                    host in PAYMENT_HOSTS || PAYMENT_HOSTS.any { host.endsWith(".$it") } -> {
+                        openExternal(url)
+                        true
+                    }
+                    host == "aramis-beauty.ir" || host.endsWith(".aramis-beauty.ir") -> {
+                        false // stay inside the app
+                    }
+                    else -> {
+                        openExternal(url)
+                        true
+                    }
                 }
             }
 
@@ -151,6 +167,36 @@ class MainActivity : AppCompatActivity() {
         } ?: HOME_URL
         if (savedInstanceState == null) {
             webView.loadUrl(startUrl)
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.toolbar_menu, menu)
+        val searchItem = menu.findItem(R.id.action_search)
+        val searchView = searchItem.actionView as SearchView
+        searchView.queryHint = getString(R.string.search_hint)
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                val q = query?.trim()
+                if (!q.isNullOrEmpty()) {
+                    loadUrl(HOME_URL + "?search=" + URLEncoder.encode(q, "UTF-8"))
+                }
+                searchView.clearFocus()
+                searchItem.collapseActionView()
+                return true
+            }
+            override fun onQueryTextChange(newText: String?): Boolean = false
+        })
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_cart -> {
+                loadUrl(CART_URL)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 
