@@ -35,10 +35,6 @@ class MainActivity : AppCompatActivity() {
         const val TELEGRAM_URL = "https://t.me/AramisBeauty_Ch"
         const val RUBIKA_URL = "https://rubika.ir/joing/HCIBADFA0JCEETLQHXTIJKEXVSMCNMYU"
         const val INSTAGRAM_URL = "https://www.instagram.com/aramisbeauty.shop"
-        // Payment gateways open in the system browser: Zarinpal's page checks the
-        // real browser environment (referer / user agent) and rejects embedded
-        // WebViews with a domain error, so the gateway must not run inside the app.
-        val PAYMENT_HOSTS = setOf("zarinpal.com", "www.zarinpal.com", "snapppay.ir", "www.snapppay.ir")
     }
 
     private lateinit var drawer: DrawerLayout
@@ -52,8 +48,7 @@ class MainActivity : AppCompatActivity() {
 
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayShowTitleEnabled(false)
-        findViewById<ImageView>(R.id.toolbar_logo).setOnClickListener { loadUrl(HOME_URL) }
+        supportActionBar?.setDisplayShowTitleEnabled(true)
 
         drawer = findViewById(R.id.drawer_layout)
         val toggle = ActionBarDrawerToggle(
@@ -80,18 +75,16 @@ class MainActivity : AppCompatActivity() {
             ): Boolean {
                 val url = request.url.toString()
                 val host = request.url.host ?: ""
-                return when {
-                    host in PAYMENT_HOSTS || PAYMENT_HOSTS.any { host.endsWith(".$it") } -> {
-                        openExternal(url)
-                        true
-                    }
-                    host == "aramis-beauty.ir" || host.endsWith(".aramis-beauty.ir") -> {
-                        false // stay inside the app
-                    }
-                    else -> {
-                        openExternal(url)
-                        true
-                    }
+                // Payment gateways stay INSIDE the app's WebView: opening the
+                // Zarinpal URL in an external browser strips the navigation
+                // context (no referer from the shop), and Zarinpal rejects it
+                // with "access from this domain is not allowed".
+                return if (host == "aramis-beauty.ir" || host.endsWith(".aramis-beauty.ir")
+                    || host.endsWith("zarinpal.com") || host.endsWith("snapppay.ir")) {
+                    false // stay inside the app
+                } else {
+                    openExternal(url)
+                    true
                 }
             }
 

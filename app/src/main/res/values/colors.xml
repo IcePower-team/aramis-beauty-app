@@ -2,6 +2,7 @@
 <resources>
     <color name="burgundy">#6E0B28</color>
     <color name="burgundy_dark">#4A0819</color>
+    <color name="header_top">#081828</color>
     <color name="burgundy_light">#8E1538</color>
     <color name="gold">#C9A227</color>
     <color name="white">#FFFFFF</color>
