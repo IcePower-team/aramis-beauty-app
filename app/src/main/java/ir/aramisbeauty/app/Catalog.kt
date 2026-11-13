@@ -32,7 +32,11 @@ object Catalog {
         /** What the product goes WITH, not what it IS (e.g. a sponge is
          * used with foundation but is not a foundation). Primary hits
          * always outrank related hits in the advisor. */
-        val relatedKeywords: Set<String> = emptySet()
+        val relatedKeywords: Set<String> = emptySet(),
+        /** Bundled stock flag, live-verified when added. The chat's live
+         * check corrects the badge/price at display time; the flag only
+         * drives ORDER (in-stock first). Update it when stock changes. */
+        val inStock: Boolean = true
     ) {
         val url: String get() = "https://aramis-beauty.ir/product/$id"
     }
@@ -40,11 +44,12 @@ object Catalog {
     private fun p(
         id: Int, name: String, price: Int, image: String,
         category: String, tags: Set<String>, keywords: Set<String>,
-        related: Set<String> = emptySet()
+        related: Set<String> = emptySet(),
+        inStock: Boolean = true
     ) = ShopProduct(
         id, name, price,
         "https://aramis-beauty.ir/shop/pic/product/aramis-beauty/$image",
-        category, tags, keywords, related
+        category, tags, keywords, related, inStock
     )
 
     val products = listOf(
@@ -75,25 +80,32 @@ object Catalog {
         // "ناموجود" — Mahdi wants them visible, not hidden.
         p(115, "کرم پودر تیوپی دوسه اصل", 300000, "115.jpg", "base",
             setOf("daily", "party"),
-            setOf("کرم پودر", "فوندیشن", "دوسه", "تیوپی")),
+            setOf("کرم پودر", "فوندیشن", "دوسه", "تیوپی"),
+            inStock = false),
         p(47, "کرم پودر تیوپی مک MAC", 421000, "47.jpg", "base",
             setOf("daily", "party"),
-            setOf("کرم پودر", "فوندیشن", "مک", "تیوپی")),
+            setOf("کرم پودر", "فوندیشن", "مک", "تیوپی"),
+            inStock = false),
         p(102, "کرم پودر تیوپی گارنیش", 491000, "102.jpg", "base",
             setOf("daily", "party"),
-            setOf("کرم پودر", "فوندیشن", "گارنیش", "تیوپی")),
+            setOf("کرم پودر", "فوندیشن", "گارنیش", "تیوپی"),
+            inStock = false),
         p(119, "کرم پودر گابرینی اصل", 586000, "119.jpg", "base",
             setOf("daily", "party"),
-            setOf("کرم پودر", "فوندیشن", "گابرینی")),
+            setOf("کرم پودر", "فوندیشن", "گابرینی"),
+            inStock = false),
         p(101, "کرم پودر شیشه ای گارنیش", 606000, "101.jpg", "base",
             setOf("daily", "party"),
-            setOf("کرم پودر", "فوندیشن", "گارنیش", "شیشه ای")),
+            setOf("کرم پودر", "فوندیشن", "گارنیش", "شیشه ای"),
+            inStock = false),
         p(45, "کرم پودر لورال اینفالیبل اصل", 853000, "45.jpg", "base",
             setOf("daily", "party"),
-            setOf("کرم پودر", "فوندیشن", "لورال", "اینفالیبل")),
+            setOf("کرم پودر", "فوندیشن", "لورال", "اینفالیبل"),
+            inStock = false),
         p(140, "کرم پودر نارس مدل نچرال رادیانت اصل", 10267000, "140_2.jpg", "base",
             setOf("daily", "party"),
-            setOf("کرم پودر", "فوندیشن", "نارس", "نچرال")),
+            setOf("کرم پودر", "فوندیشن", "نارس", "نچرال"),
+            inStock = false),
         p(491, "کانسیلر مایع پرنسس لیدی", 535000, "491.webp", "base",
             setOf("daily", "party"),
             setOf("کانسیلر", "پوشاننده", "صورت")),

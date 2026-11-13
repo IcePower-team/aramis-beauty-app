@@ -104,11 +104,11 @@ object AdvisorEngine {
             if (limit > 0) {
                 val picks = Catalog.products
                     .filter { it.priceToman <= limit }
-                    .sortedBy { it.priceToman }
+                    .sortedWith(inStockFirstByPrice)
                     .take(20)
                 if (picks.isNotEmpty()) {
                     return Reply(
-                        "زیر ${formatPrice(limit)}، ${faNum(picks.size)} تا داریم، از ارزون به گرون 👇",
+                        "زیر ${formatPrice(limit)}، ${faNum(picks.size)} تا داریم، موجودها اول از ارزون به گرون 👇",
                         picks
                     )
                 }
@@ -117,7 +117,7 @@ object AdvisorEngine {
 
         // Cheapest / discount
         if (t.any { it in setOf("ارزون", "ارزان", "ارزونترین", "ارزانترین") }) {
-            val picks = Catalog.products.sortedBy { it.priceToman }.take(20)
+            val picks = Catalog.products.sortedWith(inStockFirstByPrice).take(20)
             return Reply("ارزون‌ترین‌های فروشگاه — ${faNum(picks.size)} تا، از ارزون به گرون 👇", picks)
         }
         if ("تخفیف" in t) {
@@ -184,7 +184,10 @@ object AdvisorEngine {
                 p.tags.sumOf { tag -> weights[tag] ?: 0 }
             )
         }
-        val byRelevance = compareByDescending<Scored> { it.primary }
+        // In-stock first (Mahdi's rule: even a cheap out-of-stock item
+        // comes after every in-stock one), then relevance, then price.
+        val byRelevance = compareByDescending<Scored> { it.product.inStock }
+            .thenByDescending { it.primary }
             .thenByDescending { it.tagScore }
             .thenBy { it.product.priceToman }
 
@@ -196,7 +199,7 @@ object AdvisorEngine {
         fun foundText(picks: List<Catalog.ShopProduct>): String {
             val head = if (context.isNotEmpty()) "برای $context" else ""
             return if (picks.size > 3) {
-                "${if (head.isNotEmpty()) "$head، " else ""}${faNum(picks.size)} تا پیدا کردم، از ارزون به گرون 👇"
+                "${if (head.isNotEmpty()) "$head، " else ""}${faNum(picks.size)} تا پیدا کردم، موجودها اول از ارزون به گرون 👇"
             } else if (head.isNotEmpty()) {
                 "$head، اینا بهت میاد 👇"
             } else {
@@ -214,7 +217,8 @@ object AdvisorEngine {
 
         val relatedPicks = scored.filter { it.related > 0 }
             .sortedWith(
-                compareByDescending<Scored> { it.related }
+                compareByDescending<Scored> { it.product.inStock }
+                    .thenByDescending { it.related }
                     .thenByDescending { it.tagScore }
                     .thenBy { it.product.priceToman }
             ).take(20).map { it.product }
@@ -257,6 +261,11 @@ object AdvisorEngine {
         }
         return picked
     }
+
+    /** In-stock first, then cheapest — the standing list order. */
+    private val inStockFirstByPrice =
+        compareByDescending<Catalog.ShopProduct> { it.inStock }
+            .thenBy { it.priceToman }
 
     private fun faNum(value: Int): String =
         value.toString().map { c ->
