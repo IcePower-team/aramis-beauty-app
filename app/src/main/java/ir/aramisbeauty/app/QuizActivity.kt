@@ -14,6 +14,7 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.content.ContextCompat
@@ -112,16 +113,20 @@ class QuizActivity : AppCompatActivity() {
         }
         findViewById<AppCompatButton>(R.id.quiz_done).setOnClickListener { finish() }
 
-        onBackPressedDispatcher.addCallback(this) {
-            if (resultView.visibility == View.VISIBLE || loadingView.visibility == View.VISIBLE) {
-                finish()
-            } else if (currentIndex > 0) {
-                currentIndex--
-                showQuestion(currentIndex)
-            } else {
-                finish()
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (resultView.visibility == View.VISIBLE ||
+                    loadingView.visibility == View.VISIBLE
+                ) {
+                    finish()
+                } else if (currentIndex > 0) {
+                    currentIndex--
+                    showQuestion(currentIndex)
+                } else {
+                    finish()
+                }
             }
-        }
+        })
 
         showQuestion(0)
     }
