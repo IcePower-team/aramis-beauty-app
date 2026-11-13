@@ -32,6 +32,12 @@
             </intent-filter>
         </activity>
 
+        <!-- Beauty quiz ("چی به من میاد؟") — native, dark luxury screen -->
+        <activity
+            android:name=".QuizActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="false" />
+
         <!-- Shares the downloaded update APK with the system installer -->
         <provider
             android:name="androidx.core.content.FileProvider"

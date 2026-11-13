@@ -10,6 +10,10 @@
     <color name="drawer_item_bg_checked">#F6E3E8</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
+    <color name="quiz_card">#10273F</color>
+    <color name="quiz_option_fill">#0E2438</color>
+    <color name="quiz_option_selected_fill">#1A3652</color>
+    <color name="quiz_option_border">#24405E</color>
     <color name="gray_text">#666666</color>
     <color name="telegram_blue">#26A5E4</color>
     <color name="instagram_pink">#E1306C</color>

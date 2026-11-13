@@ -197,6 +197,10 @@ class MainActivity : AppCompatActivity() {
             loadUrl(CART_URL)
             drawer.closeDrawers()
         }
+        findViewById<View>(R.id.row_quiz).setOnClickListener {
+            startActivity(Intent(this, QuizActivity::class.java))
+            drawer.closeDrawers()
+        }
 
         // Login / register buttons in the drawer header
         val header = findViewById<View>(R.id.drawer_header)
