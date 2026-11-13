@@ -184,10 +184,13 @@ object AdvisorEngine {
                 p.tags.sumOf { tag -> weights[tag] ?: 0 }
             )
         }
-        // In-stock first (Mahdi's rule: even a cheap out-of-stock item
-        // comes after every in-stock one), then relevance, then price.
-        val byRelevance = compareByDescending<Scored> { it.product.inStock }
-            .thenByDescending { it.primary }
+        // Relevance first, then stock: an exact match that is out of
+        // stock still outranks a partial match that is in stock — but
+        // within the same relevance, in-stock comes first (Mahdi's rule:
+        // even a cheap out-of-stock item comes after every in-stock one
+        // of the same relevance), cheapest first.
+        val byRelevance = compareByDescending<Scored> { it.primary }
+            .thenByDescending { it.product.inStock }
             .thenByDescending { it.tagScore }
             .thenBy { it.product.priceToman }
 
@@ -217,8 +220,8 @@ object AdvisorEngine {
 
         val relatedPicks = scored.filter { it.related > 0 }
             .sortedWith(
-                compareByDescending<Scored> { it.product.inStock }
-                    .thenByDescending { it.related }
+                compareByDescending<Scored> { it.related }
+                    .thenByDescending { it.product.inStock }
                     .thenByDescending { it.tagScore }
                     .thenBy { it.product.priceToman }
             ).take(20).map { it.product }

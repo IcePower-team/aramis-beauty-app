@@ -10,7 +10,10 @@ package ir.aramisbeauty.app
  * foundations for "کرم پودر", and 7 out-of-stock foundations (45, 47,
  * 101, 102, 115, 119, 140) added so the advisor can list all 13
  * foundations sorted by price, with the chat marking the unavailable
- * ones "ناموجود".
+ * ones "ناموجود". Since 2026-11-13 the advisor searches the WHOLE site
+ * (SiteProducts.kt: all 503 live products, keywords = name tokens);
+ * the entries below are the curated overrides for the products the quiz
+ * and the advisor know best.
  * quiz re-checks them live at result time, and the advisor re-checks
  * availability in the background after showing a reply.
  *
@@ -52,7 +55,7 @@ object Catalog {
         category, tags, keywords, related, inStock
     )
 
-    val products = listOf(
+    private val curatedProducts = listOf(
         // --- Quiz set (17) ---
         p(466, "کرم پودر شیشه‌ای دوسه", 550000, "466.webp", "base",
             setOf("daily", "party"),
@@ -225,4 +228,18 @@ object Catalog {
             setOf("party", "bold"),
             setOf("فر کننده", "مو", "فیلیپس", "بابلیس", "سرامیکی"))
     )
+
+    /** Full site catalog for the chat advisor: every live product on
+     * aramis-beauty.ir (SiteProducts.kt, generated from a live scan
+     * 2026-11-13), with the curated entries above winning on conflicts —
+     * the curated ones carry hand-written keywords, tags and related
+     * keywords. The advisor searches this whole list, so any word on the
+     * site finds its products; the chat's live check corrects price and
+     * stock at display time. The quiz filters this same list by id, and
+     * its 17 ids all resolve to curated entries. */
+    val products: List<ShopProduct> = run {
+        val byId = curatedProducts.associateBy { it.id }.toMutableMap()
+        siteProducts.forEach { if (it.id !in byId) byId[it.id] = it }
+        byId.values.toList()
+    }
 }
