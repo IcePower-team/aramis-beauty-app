@@ -202,6 +202,27 @@ class MainActivity : AppCompatActivity() {
             drawer.closeDrawers()
         }
 
+        // Categories header — tap to expand / collapse the list.
+        // Chevron points down when collapsed, up when expanded; the choice
+        // is remembered so the drawer opens the way the user left it.
+        val prefs = getSharedPreferences("aramis_prefs", MODE_PRIVATE)
+        val categoriesSpacer = findViewById<View>(R.id.categories_spacer)
+        val categoriesChevron = findViewById<ImageView>(R.id.categories_chevron)
+        fun setCategoriesExpanded(expanded: Boolean) {
+            navView.visibility = if (expanded) View.VISIBLE else View.GONE
+            categoriesSpacer.visibility = if (expanded) View.GONE else View.VISIBLE
+            categoriesChevron.rotation = if (expanded) 180f else 0f
+        }
+        setCategoriesExpanded(prefs.getBoolean("drawer_categories_expanded", true))
+        findViewById<View>(R.id.categories_header).setOnClickListener {
+            val expanded = navView.visibility != View.VISIBLE
+            categoriesChevron.animate()
+                .rotation(if (expanded) 180f else 0f)
+                .setDuration(250).start()
+            setCategoriesExpanded(expanded)
+            prefs.edit().putBoolean("drawer_categories_expanded", expanded).apply()
+        }
+
         // Login / register buttons in the drawer header
         val header = findViewById<View>(R.id.drawer_header)
         headerView = header
