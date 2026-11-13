@@ -50,12 +50,18 @@ object AdvisorEngine {
     private fun hasWord(inputTokens: List<String>, word: String): Boolean =
         inputTokens.any { it == word || it.startsWith(word) }
 
-    private fun keywordHits(product: Catalog.ShopProduct, inputTokens: List<String>): Int {
+    private fun hits(keywords: Set<String>, inputTokens: List<String>): Int {
         val set = inputTokens.toSet()
-        return product.keywords.count { kw ->
+        return keywords.count { kw ->
             kw.split(" ").all { it in set }
         }
     }
+
+    private fun primaryHits(product: Catalog.ShopProduct, inputTokens: List<String>): Int =
+        hits(product.keywords, inputTokens)
+
+    private fun relatedHits(product: Catalog.ShopProduct, inputTokens: List<String>): Int =
+        hits(product.relatedKeywords, inputTokens)
 
     fun answer(rawInput: String): Reply {
         val n = normalize(rawInput)
@@ -154,34 +160,59 @@ object AdvisorEngine {
             else -> null
         }
 
-        // Product keyword matches, combined with tag weights
-        val scored = Catalog.products.map { p ->
-            val hits = keywordHits(p, t)
-            val tagScore = p.tags.sumOf { tag -> weights[tag] ?: 0 }
-            Triple(p, hits, tagScore)
-        }.sortedWith(
-            compareByDescending<Triple<Catalog.ShopProduct, Int, Int>> { it.second * 3 + it.third }
-                .thenBy { it.first.id }
+        // Product keyword matches: primary hits (what the product IS) beat
+        // related hits (what it goes WITH — a sponge is not a foundation).
+        // Ties keep catalog order (stable sort), so the house picks —
+        // Dosseh, then the Arselar foundations — come first.
+        data class Scored(
+            val product: Catalog.ShopProduct,
+            val primary: Int,
+            val related: Int,
+            val tagScore: Int
         )
+        val scored = Catalog.products.map { p ->
+            Scored(
+                p,
+                primaryHits(p, t),
+                relatedHits(p, t),
+                p.tags.sumOf { tag -> weights[tag] ?: 0 }
+            )
+        }
+        val byRelevance = compareByDescending<Scored> { it.primary }
+            .thenByDescending { it.tagScore }
 
-        val keywordPicks = scored.filter { it.second > 0 }.take(3).map { it.first }
-        if (keywordPicks.isNotEmpty()) {
-            val context = listOfNotNull(
-                skin?.let { "پوست $it" },
-                occasion,
-                style
-            ).joinToString("، ")
-            val text = if (context.isNotEmpty()) {
-                "برای $context، اینا بهت میاد 👇"
-            } else {
-                "این چندتا رو برات پیدا کردم 👇"
-            }
-            return Reply(text, keywordPicks)
+        val context = listOfNotNull(
+            skin?.let { "پوست $it" },
+            occasion,
+            style
+        ).joinToString("، ")
+        val foundText = if (context.isNotEmpty()) {
+            "برای $context، اینا بهت میاد 👇"
+        } else {
+            "این چندتا رو برات پیدا کردم 👇"
+        }
+
+        val primaryPicks = scored.filter { it.primary > 0 }
+            .sortedWith(byRelevance).take(3).map { it.product }
+        if (primaryPicks.isNotEmpty()) {
+            return Reply(foundText, primaryPicks)
+        }
+
+        val relatedPicks = scored.filter { it.related > 0 }
+            .sortedWith(
+                compareByDescending<Scored> { it.related }
+                    .thenByDescending { it.tagScore }
+            ).take(3).map { it.product }
+        if (relatedPicks.isNotEmpty()) {
+            return Reply(foundText, relatedPicks)
         }
 
         // No product type mentioned — recommend a look from the tag weights
         if (weights.isNotEmpty()) {
-            val look = pickLook(scored.map { it.first to (it.second * 3 + it.third) })
+            val look = pickLook(
+                scored.map { it.product to (it.related + it.tagScore) }
+                    .sortedByDescending { it.second }
+            )
             if (look.isNotEmpty()) {
                 return Reply("بر اساس چیزی که گفتی، این ست بهت میاد ✨", look)
             }

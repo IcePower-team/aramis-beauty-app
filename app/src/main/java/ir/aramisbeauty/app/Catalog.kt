@@ -5,7 +5,10 @@ package ir.aramisbeauty.app
  *
  * Every entry was verified live on the site (InStock, price, photo URL):
  * the 17 quiz products on 2026-11-13, the 22 advisor extras the same
- * evening. Prices here are the live prices at verification time; the
+ * evening, plus 5 in-stock foundations (450, 451, 379, 388, 359) added
+ * later that evening after the advisor recommended tools instead of
+ * foundations for "کرم پودر" — the site's other foundations
+ * (45, 47, 101, 102, 115, 119, 140) are OutOfStock.
  * quiz re-checks them live at result time, and the advisor re-checks
  * availability in the background after showing a reply.
  *
@@ -23,25 +26,47 @@ object Catalog {
         val imageUrl: String,
         val category: String,
         val tags: Set<String>,
-        val keywords: Set<String>
+        val keywords: Set<String>,
+        /** What the product goes WITH, not what it IS (e.g. a sponge is
+         * used with foundation but is not a foundation). Primary hits
+         * always outrank related hits in the advisor. */
+        val relatedKeywords: Set<String> = emptySet()
     ) {
         val url: String get() = "https://aramis-beauty.ir/product/$id"
     }
 
     private fun p(
         id: Int, name: String, price: Int, image: String,
-        category: String, tags: Set<String>, keywords: Set<String>
+        category: String, tags: Set<String>, keywords: Set<String>,
+        related: Set<String> = emptySet()
     ) = ShopProduct(
         id, name, price,
         "https://aramis-beauty.ir/shop/pic/product/aramis-beauty/$image",
-        category, tags, keywords
+        category, tags, keywords, related
     )
 
     val products = listOf(
         // --- Quiz set (17) ---
         p(466, "کرم پودر شیشه‌ای دوسه", 550000, "466.webp", "base",
             setOf("daily", "party"),
-            setOf("کرم پودر", "فوندیشن", "پایه", "صورت")),
+            setOf("کرم پودر", "فوندیشن", "پایه", "صورت", "شیشه ای", "دوسه")),
+        // --- Foundations (verified live 2026-11-13; the rest of the
+        // site's foundations are OutOfStock) ---
+        p(450, "کرم پودر آرسلار های کالر پرفکت | SPF 15 | ۳۰ میل", 1000000, "450.webp", "base",
+            setOf("daily", "party"),
+            setOf("کرم پودر", "فوندیشن", "آرسلار", "شیشه ای", "های کالر", "پرفکت")),
+        p(451, "کرم پودر تیوپی آرسلار های کالر | ۳۰ میل | SPF 15", 780000, "451.webp", "base",
+            setOf("daily", "party"),
+            setOf("کرم پودر", "فوندیشن", "آرسلار", "تیوپی", "های کالر")),
+        p(379, "کرم پودر تیوپی اوکالان اصل حاوی روغن آرگان", 525000, "379.jpg", "base",
+            setOf("daily", "natural"),
+            setOf("کرم پودر", "فوندیشن", "اوکالان", "تیوپی", "آرگان")),
+        p(388, "کرم پودر پمپی مینی کویین Mini Queen مدل Nude", 492370, "388.jpg", "base",
+            setOf("daily", "matte"),
+            setOf("کرم پودر", "فوندیشن", "مینی کویین", "پمپی", "مات")),
+        p(359, "کرم پودر CC لنکاور: پوشش بی‌نقص، مات و ماندگار برای پوست چرب و جوش‌دار", 2722000, "359_4.jpg", "base",
+            setOf("oily", "matte", "daily"),
+            setOf("کرم پودر", "فوندیشن", "لنکاور", "CC", "مات", "چرب")),
         p(491, "کانسیلر مایع پرنسس لیدی", 535000, "491.webp", "base",
             setOf("daily", "party"),
             setOf("کانسیلر", "پوشاننده", "صورت")),
@@ -50,10 +75,10 @@ object Catalog {
             setOf("کانسیلر", "پوشاننده", "صورت")),
         p(484, "ریمل آرسلار R01 (بلندکننده)", 650000, "484.webp", "eyes",
             setOf("party", "bold", "daily"),
-            setOf("ریمل", "مژه", "بلند", "حجم")),
+            setOf("ریمل", "مژه", "بلند", "حجم", "آرسلار")),
         p(485, "ریمل آرسلار R02 (پرپشت‌کننده)", 650000, "485.webp", "eyes",
             setOf("party", "bold"),
-            setOf("ریمل", "مژه", "حجم", "پرپشت")),
+            setOf("ریمل", "مژه", "حجم", "پرپشت", "آرسلار")),
         p(486, "ریمل ستاره آبی شیدوس", 395000, "486.webp", "eyes",
             setOf("daily", "natural"),
             setOf("ریمل", "مژه", "ضد آب")),
@@ -99,13 +124,15 @@ object Catalog {
             setOf("وزگیر", "مو", "استیکی", "تیجی", "چسب مو")),
         p(472, "برس مو طرح‌دار فانتزی", 285000, "472.webp", "care",
             setOf("daily", "natural"),
-            setOf("برس", "مو", "شانه", "طرح دار")),
+            setOf("برس", "مو", "طرح دار"),
+            related = setOf("شانه")),
         p(473, "تافت مو ویتروس اولترا استرانگ ۲۵۰ میل", 325000, "473.webp", "care",
             setOf("daily", "party"),
             setOf("تافت", "مو", "اسپری مو", "حالت دهنده")),
         p(481, "پد تخم مرغی", 95000, "481.webp", "base",
             setOf("daily", "natural"),
-            setOf("پد", "اسفنج", "تخم مرغی", "کرم پودر", "بلندر")),
+            setOf("پد", "اسفنج", "تخم مرغی", "بلندر"),
+            related = setOf("کرم پودر")),
         p(482, "شامپو رنگ مو بابل موس رنگ مشکی اصل", 2450000, "482.webp", "care",
             setOf("party", "bold"),
             setOf("شامپو", "رنگ مو", "مشکی", "بابل", "موس")),
@@ -150,7 +177,8 @@ object Catalog {
             setOf("وکس", "دستگاه", "مو", "اپیلاسیون", "سیلیکونی")),
         p(502, "براش سر تخت کرم پودر", 205000, "502.jpg", "base",
             setOf("daily", "natural"),
-            setOf("براش", "کرم پودر", "تخت", "آرایش")),
+            setOf("براش", "تخت", "آرایش"),
+            related = setOf("کرم پودر")),
         p(503, "شانه شپش", 15000, "503.webp", "care",
             setOf("daily"),
             setOf("شانه", "شپش")),
