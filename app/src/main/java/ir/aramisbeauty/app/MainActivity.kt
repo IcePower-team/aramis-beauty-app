@@ -8,10 +8,14 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.animation.DecelerateInterpolator
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -62,6 +66,11 @@ class MainActivity : AppCompatActivity() {
     private var headerView: View? = null
     private var updateDialog: Dialog? = null
     private var pendingApkFile: File? = null
+    // Animated launch splash (shown while the site loads, then fades out)
+    private var splashView: View? = null
+    private var splashHidden = false
+    private var splashStartTime = 0L
+    private val splashHandler = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -122,9 +131,14 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView, url: String) {
                 swipe.isRefreshing = false
                 checkLoginState()
+                hideSplash()
             }
         }
-        webView.webChromeClient = WebChromeClient()
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onProgressChanged(view: WebView, newProgress: Int) {
+                findViewById<ProgressBar>(R.id.splash_progress)?.progress = newProgress
+            }
+        }
 
         val navView = findViewById<NavigationView>(R.id.nav_view)
         navView.setNavigationItemSelectedListener { item: MenuItem ->
@@ -199,7 +213,7 @@ class MainActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
-                    drawer.isDrawerOpen(findViewById<View>(R.id.nav_view)) ->
+                    drawer.isDrawerOpen(findViewById<View>(R.id.drawer_container)) ->
                         drawer.closeDrawers()
                     webView.canGoBack() -> webView.goBack()
                     else -> {
@@ -217,9 +231,47 @@ class MainActivity : AppCompatActivity() {
             webView.loadUrl(startUrl)
         }
 
+        // Animated launch splash: the logo fades/scales in over a gold
+        // progress bar while the site loads; it fades out once the page
+        // is ready (never later than 8s, so it can never trap the user).
+        startSplash()
+
         // Check GitHub for a newer release; shows the update dialog only
         // when one exists (silent when offline or already up to date).
         checkForUpdate()
+    }
+
+    private fun startSplash() {
+        val splash = findViewById<View>(R.id.splash_overlay) ?: return
+        splashView = splash
+        splashStartTime = SystemClock.uptimeMillis()
+        val logo = findViewById<ImageView>(R.id.splash_logo)
+        logo?.let {
+            it.alpha = 0f
+            it.scaleX = 0.92f
+            it.scaleY = 0.92f
+            it.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(700)
+                .setInterpolator(DecelerateInterpolator()).start()
+        }
+        findViewById<TextView>(R.id.splash_text)?.let { text ->
+            text.alpha = 0f
+            text.animate().alpha(1f).setStartDelay(300).setDuration(500).start()
+        }
+        splashHandler.postDelayed({ hideSplash() }, 8000)
+    }
+
+    private fun hideSplash() {
+        val splash = splashView ?: return
+        if (splashHidden) return
+        splashHidden = true
+        // Let the intro animation be seen for at least 1.5s, then fade out.
+        val elapsed = SystemClock.uptimeMillis() - splashStartTime
+        val delay = (1500L - elapsed).coerceAtLeast(0L)
+        splashHandler.postDelayed({
+            splash.animate().alpha(0f).setDuration(400).withEndAction {
+                splash.visibility = View.GONE
+            }.start()
+        }, delay)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
