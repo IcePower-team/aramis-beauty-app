@@ -20,10 +20,6 @@ import androidx.appcompat.widget.AppCompatButton
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import coil.load
-import org.json.JSONArray
-import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
 import java.util.Locale
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -40,12 +36,6 @@ import java.util.concurrent.TimeUnit
  * swapped for the next-best product of the same category.
  */
 class QuizActivity : AppCompatActivity() {
-
-    companion object {
-        private const val CHROME_UA =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-                "(KHTML, like Gecko) Chrome/120.0 Safari/537.36"
-    }
 
     private val handler = Handler(Looper.getMainLooper())
     private var currentIndex = 0
@@ -66,9 +56,8 @@ class QuizActivity : AppCompatActivity() {
     private lateinit var resultDesc: TextView
     private lateinit var resultProducts: LinearLayout
 
-    private data class LiveInfo(val name: String?, val priceToman: Int?, val inStock: Boolean)
     private data class ResultItem(
-        val product: QuizData.QuizProduct,
+        val product: Catalog.ShopProduct,
         val liveName: String?,
         val livePriceToman: Int?,
         val inStock: Boolean? // null = live check failed, assume available
@@ -241,8 +230,8 @@ class QuizActivity : AppCompatActivity() {
     /** Re-check the look live; swap any out-of-stock pick for the
      * next-best product of the same category (top 2 candidates checked). */
     private fun loadResultsWithLiveCheck(
-        look: List<QuizData.QuizProduct>,
-        scored: List<Pair<QuizData.QuizProduct, Int>>
+        look: List<Catalog.ShopProduct>,
+        scored: List<Pair<Catalog.ShopProduct, Int>>
     ): List<ResultItem> {
         val pool = Executors.newFixedThreadPool(4)
         try {
@@ -253,7 +242,7 @@ class QuizActivity : AppCompatActivity() {
                     .take(2)
                     .map { it.first }
                 val checks = candidates.map { p ->
-                    p to pool.submit<LiveInfo?> { fetchLive(p.id) }
+                    p to pool.submit<LiveCheck.LiveInfo?> { LiveCheck.fetch(p.id) }
                 }
                 var picked: ResultItem? = null
                 for ((product, future) in checks) {
@@ -279,51 +268,6 @@ class QuizActivity : AppCompatActivity() {
         } finally {
             pool.shutdown()
         }
-    }
-
-    private fun fetchLive(pid: Int): LiveInfo? {
-        return try {
-            val conn = URL("https://aramis-beauty.ir/product/$pid")
-                .openConnection() as HttpURLConnection
-            conn.setRequestProperty("User-Agent", CHROME_UA)
-            conn.connectTimeout = 5000
-            conn.readTimeout = 5000
-            if (conn.responseCode != 200) return null
-            val html = conn.inputStream.bufferedReader(Charsets.UTF_8).readText()
-            conn.disconnect()
-            parseLive(html)
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    private fun parseLive(html: String): LiveInfo? {
-        val regex = Regex(
-            """<script type="application/ld\+json">(.*?)</script>""",
-            RegexOption.DOT_MATCHES_ALL
-        )
-        for (m in regex.findAll(html)) {
-            val raw = m.groupValues[1].trim()
-            val objects: List<JSONObject> = try {
-                if (raw.startsWith("[")) {
-                    val arr = JSONArray(raw)
-                    (0 until arr.length()).mapNotNull { arr.optJSONObject(it) }
-                } else {
-                    listOf(JSONObject(raw))
-                }
-            } catch (e: Exception) {
-                continue
-            }
-            for (obj in objects) {
-                if (obj.optString("@type") != "Product") continue
-                val offers = obj.optJSONObject("offers") ?: continue
-                val avail = offers.optString("availability").substringAfterLast("/")
-                val price = offers.optDouble("price", Double.NaN)
-                val priceToman = if (!price.isNaN()) (price / 10).toInt() else null
-                return LiveInfo(obj.optString("name"), priceToman, avail == "InStock")
-            }
-        }
-        return null
     }
 
     private fun showResult(

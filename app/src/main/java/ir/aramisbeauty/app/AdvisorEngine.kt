@@ -1,0 +1,222 @@
+package ir.aramisbeauty.app
+
+/**
+ * Rule-based beauty advisor: matches the user's Persian message against
+ * the shop catalog (keywords + skin/occasion/style tags) and recommends
+ * up to 3 products. No network, no AI — everything runs on the phone.
+ *
+ * Matching is token-based (whole words), never substring-based: a naive
+ * substring match would make "مو" (hair) hit inside "مهمونی" (party).
+ * Normalization (آ→ا, ي→ی, ك→ک, ZWNJ→space, Persian digits→Latin)
+ * is applied to both the input and the keywords before matching.
+ */
+object AdvisorEngine {
+
+    data class Reply(
+        val text: String,
+        val products: List<Catalog.ShopProduct>,
+        val openQuiz: Boolean = false
+    )
+
+    val defaultChips = listOf(
+        "پوست چربه چی بزنم؟",
+        "کرم پودر خوب چی داری؟",
+        "برای مهمونی چی پیشنهاد می‌کنی؟",
+        "ارزون‌ترین‌ها",
+        "کوئیز زیبایی"
+    )
+
+    fun normalize(text: String): String {
+        val digits = text.map { c ->
+            when (c) {
+                in '۰'..'۹' -> "0123456789"[c - '۰']
+                in '٠'..'٩' -> "0123456789"[c - '٠']
+                else -> c
+            }
+        }.joinToString("")
+        return digits
+            .replace('آ', 'ا')
+            .replace('ي', 'ی')
+            .replace('ك', 'ک')
+            .replace("\u200C", " ")
+            .replace("\u200D", "")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+    }
+
+    private fun tokens(normalized: String): List<String> =
+        normalized.split(" ").filter { it.isNotEmpty() }
+
+    private fun hasWord(inputTokens: List<String>, word: String): Boolean =
+        inputTokens.any { it == word || it.startsWith(word) }
+
+    private fun keywordHits(product: Catalog.ShopProduct, inputTokens: List<String>): Int {
+        val set = inputTokens.toSet()
+        return product.keywords.count { kw ->
+            kw.split(" ").all { it in set }
+        }
+    }
+
+    fun answer(rawInput: String): Reply {
+        val n = normalize(rawInput)
+        if (n.isBlank()) {
+            return Reply("چیزی ننوشتی 😊 سؤالت رو بنویس — مثلاً «برای پوست چرب چی خوبه؟»", emptyList())
+        }
+        val t = tokens(n)
+
+        // Greeting
+        if (t.any { it in setOf("سلام", "درود", "هی", "صبح", "عصر", "شب") } &&
+            t.size <= 3
+        ) {
+            return Reply(
+                "سلام عزیزم! ✨ من مشاور زیبایی آرامیس‌م. بگو چی دنبالشی — " +
+                    "مثلاً نوع پوستت، یه محصول خاص، یا موقعیتی که می‌خوای براش آماده شی.",
+                emptyList()
+            )
+        }
+
+        // Quiz handoff
+        if ("کوئیز" in t || "کوییز" in t) {
+            return Reply(
+                "حتماً! کوئیز زیبایی ۴ تا سؤال می‌پرسه و ست مخصوص خودت رو می‌چینه ✨",
+                emptyList(),
+                openQuiz = true
+            )
+        }
+
+        // Budget: "زیر ۳۰۰ هزار تومان"
+        val under = Regex("""زیر\s*(\d+)\s*(هزار)?""").find(n)
+        if (under != null) {
+            val amount = under.groupValues[1].toIntOrNull() ?: 0
+            val limit = if (under.groupValues[2].isNotEmpty()) amount * 1000 else amount
+            if (limit > 0) {
+                val picks = Catalog.products
+                    .filter { it.priceToman <= limit }
+                    .sortedBy { it.priceToman }
+                    .take(3)
+                if (picks.isNotEmpty()) {
+                    return Reply(
+                        "زیر ${formatPrice(limit)} اینا رو داریم 👇",
+                        picks
+                    )
+                }
+            }
+        }
+
+        // Cheapest / discount
+        if (t.any { it in setOf("ارزون", "ارزان", "ارزونترین", "ارزانترین") }) {
+            val picks = Catalog.products.sortedBy { it.priceToman }.take(3)
+            return Reply("ارزون‌ترین‌های فروشگاه 👇", picks)
+        }
+        if ("تخفیف" in t) {
+            val picks = listOfNotNull(
+                Catalog.products.firstOrNull { it.id == 470 },
+                Catalog.products.firstOrNull { it.id == 503 },
+                Catalog.products.firstOrNull { it.id == 474 }
+            )
+            return Reply(
+                "اسپری فیکس شیگلم الان ۲۱٪ تخفیف داره! 🎉 اینا هم ارزون‌ترین‌هستن 👇",
+                picks
+            )
+        }
+
+        // Bestsellers
+        if (t.any { it in setOf("بهترین", "پرفروش", "محبوب", "پرفروشترین") }) {
+            val picks = listOfNotNull(
+                Catalog.products.firstOrNull { it.id == 484 },
+                Catalog.products.firstOrNull { it.id == 485 },
+                Catalog.products.firstOrNull { it.id == 494 }
+            )
+            return Reply("پرفروش‌ترین‌های فروشگاه 👇", picks)
+        }
+
+        // Tag weights from skin / occasion / style words
+        val weights = mutableMapOf<String, Int>()
+        fun add(tag: String, w: Int) { weights[tag] = (weights[tag] ?: 0) + w }
+        val skin = when {
+            hasWord(t, "چرب") -> { add("oily", 2); add("matte", 1); "چرب" }
+            hasWord(t, "خشک") -> { add("dry", 2); add("glossy", 1); "خشک" }
+            hasWord(t, "مختلط") -> { add("daily", 1); add("natural", 1); "مختلط" }
+            hasWord(t, "حساس") -> { add("natural", 2); add("daily", 1); "حساس" }
+            else -> null
+        }
+        val occasion = when {
+            hasWord(t, "عروس") || hasWord(t, "مجلس") -> { add("party", 2); add("bold", 1); "مجلسی" }
+            hasWord(t, "مهمونی") -> { add("party", 2); "مهمونی" }
+            hasWord(t, "روزمره") -> { add("daily", 2); "روزمره" }
+            else -> null
+        }
+        val style = when {
+            hasWord(t, "جسورانه") || hasWord(t, "چشمگیر") -> { add("bold", 2); add("party", 1); "جسورانه" }
+            hasWord(t, "طبیعی") || hasWord(t, "ملایم") -> { add("natural", 2); "طبیعی" }
+            hasWord(t, "مات") -> { add("matte", 2); "مات" }
+            hasWord(t, "براق") || hasWord(t, "شاین") -> { add("glossy", 2); "براق" }
+            else -> null
+        }
+
+        // Product keyword matches, combined with tag weights
+        val scored = Catalog.products.map { p ->
+            val hits = keywordHits(p, t)
+            val tagScore = p.tags.sumOf { tag -> weights[tag] ?: 0 }
+            Triple(p, hits, tagScore)
+        }.sortedWith(
+            compareByDescending<Triple<Catalog.ShopProduct, Int, Int>> { it.second * 3 + it.third }
+                .thenBy { it.first.id }
+        )
+
+        val keywordPicks = scored.filter { it.second > 0 }.take(3).map { it.first }
+        if (keywordPicks.isNotEmpty()) {
+            val context = listOfNotNull(
+                skin?.let { "پوست $it" },
+                occasion,
+                style
+            ).joinToString("، ")
+            val text = if (context.isNotEmpty()) {
+                "برای $context، اینا بهت میاد 👇"
+            } else {
+                "این چندتا رو برات پیدا کردم 👇"
+            }
+            return Reply(text, keywordPicks)
+        }
+
+        // No product type mentioned — recommend a look from the tag weights
+        if (weights.isNotEmpty()) {
+            val look = pickLook(scored.map { it.first to (it.second * 3 + it.third) })
+            if (look.isNotEmpty()) {
+                return Reply("بر اساس چیزی که گفتی، این ست بهت میاد ✨", look)
+            }
+        }
+
+        // Fallback
+        return Reply(
+            "دقیق متوجه نشدم 😅 ولی می‌تونی از اینا بپرسی — مثلاً «ریمل خوب چی داری؟» " +
+                "یا «برای پوست خشک چی پیشنهاد می‌کنی؟» " +
+                "اگه نمی‌دونی چی می‌خوای، کوئیز زیبایی رو بزن ✨",
+            emptyList()
+        )
+    }
+
+    private fun pickLook(
+        scored: List<Pair<Catalog.ShopProduct, Int>>
+    ): List<Catalog.ShopProduct> {
+        val picked = mutableListOf<Catalog.ShopProduct>()
+        val used = mutableSetOf<String>()
+        for ((product, score) in scored) {
+            if (score <= 0) break
+            if (product.category !in used) {
+                picked.add(product)
+                used.add(product.category)
+            }
+            if (picked.size == 3) break
+        }
+        return picked
+    }
+
+    private fun formatPrice(toman: Int): String {
+        val grouped = String.format(java.util.Locale.US, "%,d", toman)
+        val fa = grouped.map { c ->
+            if (c in '0'..'9') "۰۱۲۳۴۵۶۷۸۹"[c - '0'] else c
+        }.joinToString("")
+        return "$fa تومان"
+    }
+}

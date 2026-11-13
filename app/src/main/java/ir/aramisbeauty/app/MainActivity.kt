@@ -201,6 +201,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, QuizActivity::class.java))
             drawer.closeDrawers()
         }
+        findViewById<View>(R.id.row_advisor).setOnClickListener {
+            startActivity(Intent(this, ChatActivity::class.java))
+            drawer.closeDrawers()
+        }
 
         // Categories header — tap to expand / collapse the list.
         // Chevron points down when collapsed, up when expanded; the choice

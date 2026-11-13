@@ -38,6 +38,12 @@
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="false" />
 
+        <!-- Beauty advisor chat — native, dark luxury screen -->
+        <activity
+            android:name=".ChatActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="false" />
+
         <!-- Shares the downloaded update APK with the system installer -->
         <provider
             android:name="androidx.core.content.FileProvider"
