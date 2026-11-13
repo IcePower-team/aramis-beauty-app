@@ -7,8 +7,10 @@ package ir.aramisbeauty.app
  * the 17 quiz products on 2026-11-13, the 22 advisor extras the same
  * evening, plus 5 in-stock foundations (450, 451, 379, 388, 359) added
  * later that evening after the advisor recommended tools instead of
- * foundations for "کرم پودر" — the site's other foundations
- * (45, 47, 101, 102, 115, 119, 140) are OutOfStock.
+ * foundations for "کرم پودر", and 7 out-of-stock foundations (45, 47,
+ * 101, 102, 115, 119, 140) added so the advisor can list all 13
+ * foundations sorted by price, with the chat marking the unavailable
+ * ones "ناموجود".
  * quiz re-checks them live at result time, and the advisor re-checks
  * availability in the background after showing a reply.
  *
@@ -67,6 +69,31 @@ object Catalog {
         p(359, "کرم پودر CC لنکاور: پوشش بی‌نقص، مات و ماندگار برای پوست چرب و جوش‌دار", 2722000, "359_4.jpg", "base",
             setOf("oily", "matte", "daily"),
             setOf("کرم پودر", "فوندیشن", "لنکاور", "CC", "مات", "چرب")),
+        // --- Out-of-stock foundations (verified live 2026-11-13) ---
+        // Deliberately in the catalog: the advisor shows them too, sorted
+        // by price with the rest, and the chat's live check marks them
+        // "ناموجود" — Mahdi wants them visible, not hidden.
+        p(115, "کرم پودر تیوپی دوسه اصل", 300000, "115.jpg", "base",
+            setOf("daily", "party"),
+            setOf("کرم پودر", "فوندیشن", "دوسه", "تیوپی")),
+        p(47, "کرم پودر تیوپی مک MAC", 421000, "47.jpg", "base",
+            setOf("daily", "party"),
+            setOf("کرم پودر", "فوندیشن", "مک", "تیوپی")),
+        p(102, "کرم پودر تیوپی گارنیش", 491000, "102.jpg", "base",
+            setOf("daily", "party"),
+            setOf("کرم پودر", "فوندیشن", "گارنیش", "تیوپی")),
+        p(119, "کرم پودر گابرینی اصل", 586000, "119.jpg", "base",
+            setOf("daily", "party"),
+            setOf("کرم پودر", "فوندیشن", "گابرینی")),
+        p(101, "کرم پودر شیشه ای گارنیش", 606000, "101.jpg", "base",
+            setOf("daily", "party"),
+            setOf("کرم پودر", "فوندیشن", "گارنیش", "شیشه ای")),
+        p(45, "کرم پودر لورال اینفالیبل اصل", 853000, "45.jpg", "base",
+            setOf("daily", "party"),
+            setOf("کرم پودر", "فوندیشن", "لورال", "اینفالیبل")),
+        p(140, "کرم پودر نارس مدل نچرال رادیانت اصل", 10267000, "140_2.jpg", "base",
+            setOf("daily", "party"),
+            setOf("کرم پودر", "فوندیشن", "نارس", "نچرال")),
         p(491, "کانسیلر مایع پرنسس لیدی", 535000, "491.webp", "base",
             setOf("daily", "party"),
             setOf("کانسیلر", "پوشاننده", "صورت")),

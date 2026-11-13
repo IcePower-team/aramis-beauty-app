@@ -19,6 +19,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import coil.load
 import java.util.Locale
+import java.util.concurrent.Executors
 
 /**
  * Beauty advisor chat: the user asks in Persian ("برای پوست چرب چی
@@ -91,11 +92,13 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
-    /** Background live check: refresh price, badge out-of-stock cards. */
+    /** Background live check: refresh price, badge out-of-stock cards.
+     * Parallel (4 threads) so 20 cards don't take 20 sequential fetches. */
     private fun verifyStockLive(products: List<Catalog.ShopProduct>) {
-        Thread {
-            for (product in products) {
-                val live = LiveCheck.fetch(product.id) ?: continue
+        val pool = Executors.newFixedThreadPool(4)
+        for (product in products) {
+            pool.submit {
+                val live = LiveCheck.fetch(product.id) ?: return@submit
                 runOnUiThread {
                     val card = messagesContainer.findViewWithTag<View>(product.id) ?: return@runOnUiThread
                     card.findViewWithTag<TextView>("price")?.text = formatPrice(
@@ -107,7 +110,8 @@ class ChatActivity : AppCompatActivity() {
                     }
                 }
             }
-        }.start()
+        }
+        pool.shutdown()
     }
 
     private fun setChips(chips: List<String>) {

@@ -12,8 +12,8 @@ android {
         applicationId = "ir.aramisbeauty.app"
         minSdk = 24
         targetSdk = 34
-        versionCode = 19
-        versionName = "1.5.1"
+        versionCode = 20
+        versionName = "1.5.2"
     }
 
     signingConfigs {

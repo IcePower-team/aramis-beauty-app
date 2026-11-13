@@ -105,10 +105,10 @@ object AdvisorEngine {
                 val picks = Catalog.products
                     .filter { it.priceToman <= limit }
                     .sortedBy { it.priceToman }
-                    .take(3)
+                    .take(20)
                 if (picks.isNotEmpty()) {
                     return Reply(
-                        "زیر ${formatPrice(limit)} اینا رو داریم 👇",
+                        "زیر ${formatPrice(limit)}، ${faNum(picks.size)} تا داریم، از ارزون به گرون 👇",
                         picks
                     )
                 }
@@ -117,8 +117,8 @@ object AdvisorEngine {
 
         // Cheapest / discount
         if (t.any { it in setOf("ارزون", "ارزان", "ارزونترین", "ارزانترین") }) {
-            val picks = Catalog.products.sortedBy { it.priceToman }.take(3)
-            return Reply("ارزون‌ترین‌های فروشگاه 👇", picks)
+            val picks = Catalog.products.sortedBy { it.priceToman }.take(20)
+            return Reply("ارزون‌ترین‌های فروشگاه — ${faNum(picks.size)} تا، از ارزون به گرون 👇", picks)
         }
         if ("تخفیف" in t) {
             val picks = listOfNotNull(
@@ -186,31 +186,40 @@ object AdvisorEngine {
         }
         val byRelevance = compareByDescending<Scored> { it.primary }
             .thenByDescending { it.tagScore }
+            .thenBy { it.product.priceToman }
 
         val context = listOfNotNull(
             skin?.let { "پوست $it" },
             occasion,
             style
         ).joinToString("، ")
-        val foundText = if (context.isNotEmpty()) {
-            "برای $context، اینا بهت میاد 👇"
-        } else {
-            "این چندتا رو برات پیدا کردم 👇"
+        fun foundText(picks: List<Catalog.ShopProduct>): String {
+            val head = if (context.isNotEmpty()) "برای $context" else ""
+            return if (picks.size > 3) {
+                "${if (head.isNotEmpty()) "$head، " else ""}${faNum(picks.size)} تا پیدا کردم، از ارزون به گرون 👇"
+            } else if (head.isNotEmpty()) {
+                "$head، اینا بهت میاد 👇"
+            } else {
+                "این چندتا رو برات پیدا کردم 👇"
+            }
         }
 
+        // Up to 20 matches, cheapest first (after relevance): the chat
+        // shows the first few and the rest by scrolling.
         val primaryPicks = scored.filter { it.primary > 0 }
-            .sortedWith(byRelevance).take(3).map { it.product }
+            .sortedWith(byRelevance).take(20).map { it.product }
         if (primaryPicks.isNotEmpty()) {
-            return Reply(foundText, primaryPicks)
+            return Reply(foundText(primaryPicks), primaryPicks)
         }
 
         val relatedPicks = scored.filter { it.related > 0 }
             .sortedWith(
                 compareByDescending<Scored> { it.related }
                     .thenByDescending { it.tagScore }
-            ).take(3).map { it.product }
+                    .thenBy { it.product.priceToman }
+            ).take(20).map { it.product }
         if (relatedPicks.isNotEmpty()) {
-            return Reply(foundText, relatedPicks)
+            return Reply(foundText(relatedPicks), relatedPicks)
         }
 
         // No product type mentioned — recommend a look from the tag weights
@@ -248,6 +257,11 @@ object AdvisorEngine {
         }
         return picked
     }
+
+    private fun faNum(value: Int): String =
+        value.toString().map { c ->
+            if (c in '0'..'9') "۰۱۲۳۴۵۶۷۸۹"[c - '0'] else c
+        }.joinToString("")
 
     private fun formatPrice(toman: Int): String {
         val grouped = String.format(java.util.Locale.US, "%,d", toman)
