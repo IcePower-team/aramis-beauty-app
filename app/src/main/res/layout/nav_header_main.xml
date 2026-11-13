@@ -38,6 +38,7 @@
         android:textSize="14sp" />
 
     <LinearLayout
+        android:id="@+id/auth_buttons_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -72,5 +73,21 @@
             app:backgroundTint="@null" />
 
     </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_profile"
+        android:layout_width="match_parent"
+        android:layout_height="46dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/btn_white_pill"
+        android:text="👤 مشاهده پروفایل"
+        android:textColor="@color/burgundy"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:backgroundTint="@null" />
 
 </LinearLayout>

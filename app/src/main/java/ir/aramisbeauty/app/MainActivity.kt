@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity() {
         const val LOGIN_URL = "https://aramis-beauty.ir/login"
         const val REGISTER_URL = "https://aramis-beauty.ir/register"
         const val CART_URL = "https://aramis-beauty.ir/cart"
+        const val PANEL_URL = "https://aramis-beauty.ir/panel"
         const val TELEGRAM_URL = "https://t.me/AramisBeauty_Ch"
         const val RUBIKA_URL = "https://rubika.ir/joing/HCIBADFA0JCEETLQHXTIJKEXVSMCNMYU"
         const val INSTAGRAM_URL = "https://www.instagram.com/aramisbeauty.shop"
@@ -58,6 +59,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var drawer: DrawerLayout
     private lateinit var webView: WebView
     private lateinit var swipe: SwipeRefreshLayout
+    private var headerView: View? = null
     private var updateDialog: Dialog? = null
     private var pendingApkFile: File? = null
 
@@ -119,6 +121,20 @@ class MainActivity : AppCompatActivity() {
 
             override fun onPageFinished(view: WebView, url: String) {
                 swipe.isRefreshing = false
+                // Detect whether the user is logged in to the shop: the
+                // logged-in header carries a "خروج" (logout) link, which the
+                // logged-out page never contains. The drawer header then
+                // swaps ورود/عضویت for مشاهده پروفایل.
+                val host = try {
+                    android.net.Uri.parse(url).host ?: ""
+                } catch (_: Exception) {
+                    ""
+                }
+                if (host == "aramis-beauty.ir" || host.endsWith(".aramis-beauty.ir")) {
+                    view.evaluateJavascript(
+                        "(function(){return document.body && document.body.innerHTML.indexOf('خروج') !== -1;})()"
+                    ) { result -> updateAuthButtons(result == "true") }
+                }
             }
         }
         webView.webChromeClient = WebChromeClient()
@@ -146,12 +162,17 @@ class MainActivity : AppCompatActivity() {
 
         // Login / register buttons in the drawer header
         val header = navView.getHeaderView(0)
+        headerView = header
         header.findViewById<Button>(R.id.btn_login).setOnClickListener {
             loadUrl(LOGIN_URL)
             drawer.closeDrawers()
         }
         header.findViewById<Button>(R.id.btn_register).setOnClickListener {
             loadUrl(REGISTER_URL)
+            drawer.closeDrawers()
+        }
+        header.findViewById<Button>(R.id.btn_profile).setOnClickListener {
+            loadUrl(PANEL_URL)
             drawer.closeDrawers()
         }
 
@@ -213,17 +234,27 @@ class MainActivity : AppCompatActivity() {
             }
             override fun onQueryTextChange(newText: String?): Boolean = false
         })
-        // Home button (house emoji) — a custom action view, so it needs its own click listener
-        menu.findItem(R.id.action_home)?.actionView?.setOnClickListener {
-            loadUrl(HOME_URL)
-        }
         return true
+    }
+
+    // Swap the drawer header buttons by login state: logged in -> a single
+    // "مشاهده پروفایل" button; logged out -> ورود / عضویت.
+    private fun updateAuthButtons(loggedIn: Boolean) {
+        val header = headerView ?: return
+        header.findViewById<View>(R.id.auth_buttons_row)?.visibility =
+            if (loggedIn) View.GONE else View.VISIBLE
+        header.findViewById<View>(R.id.btn_profile)?.visibility =
+            if (loggedIn) View.VISIBLE else View.GONE
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_cart -> {
                 loadUrl(CART_URL)
+                true
+            }
+            R.id.action_home -> {
+                loadUrl(HOME_URL)
                 true
             }
             else -> super.onOptionsItemSelected(item)

@@ -17,8 +17,8 @@
 
     <item
         android:id="@+id/action_home"
+        android:icon="@drawable/ic_home"
         android:title="@string/nav_home"
-        app:actionLayout="@layout/toolbar_home_button"
         app:showAsAction="always" />
 
 </menu>
