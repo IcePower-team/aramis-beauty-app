@@ -54,9 +54,12 @@ object AdvisorEngine {
         val set = inputTokens.toSet()
         // Keywords are normalized the same way as the input — otherwise
         // a keyword with آ (e.g. "آرسلار") would never match the
-        // normalized input token ("ارسلار").
-        return keywords.count { kw ->
-            normalize(kw).split(" ").all { it in set }
+        // normalized input token ("ارسلار"). A matched multi-word
+        // keyword scores by its word count, so the specific phrase
+        // "روغن آرگان" outranks a lone "آرگان" or "روغن".
+        return keywords.sumOf { kw ->
+            val parts = normalize(kw).split(" ")
+            if (parts.all { it in set }) parts.size else 0
         }
     }
 
