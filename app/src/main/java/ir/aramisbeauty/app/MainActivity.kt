@@ -1,9 +1,12 @@
 package ir.aramisbeauty.app
 
 import android.app.Dialog
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -18,6 +21,7 @@ import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -69,6 +73,7 @@ class MainActivity : AppCompatActivity() {
     // Animated launch splash (shown while the site loads, then fades out)
     private var splashView: View? = null
     private var splashHidden = false
+    private var splashOffline = false
     private var splashStartTime = 0L
     private val splashHandler = Handler(Looper.getMainLooper())
 
@@ -132,6 +137,21 @@ class MainActivity : AppCompatActivity() {
                 swipe.isRefreshing = false
                 checkLoginState()
                 hideSplash()
+            }
+
+            override fun onReceivedError(
+                view: WebView,
+                request: WebResourceRequest,
+                error: WebResourceError
+            ) {
+                // Main-frame load failures only. Show the offline state when
+                // there is no network, or the error itself is a connectivity
+                // failure (unknown / host lookup / connect / I/O / timeout).
+                if (request.isForMainFrame &&
+                    (!isOnline() || error.errorCode in listOf(-1, -2, -6, -7, -8))
+                ) {
+                    showSplashOffline()
+                }
             }
         }
         webView.webChromeClient = object : WebChromeClient() {
@@ -257,12 +277,59 @@ class MainActivity : AppCompatActivity() {
             text.alpha = 0f
             text.animate().alpha(1f).setStartDelay(300).setDuration(500).start()
         }
+        findViewById<Button>(R.id.splash_retry)?.setOnClickListener { retrySplashLoad() }
+        if (!isOnline()) {
+            showSplashOffline()
+            return
+        }
         splashHandler.postDelayed({ hideSplash() }, 8000)
+    }
+
+    private fun isOnline(): Boolean {
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+            ?: return true
+        val network = cm.activeNetwork ?: return false
+        val caps = cm.getNetworkCapabilities(network) ?: return false
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    // No-internet state on the launch screen: hide the loading UI, show the
+    // warning + retry at the bottom, and keep the splash up until the user
+    // retries (cancels any pending auto-hide).
+    private fun showSplashOffline() {
+        val splash = splashView ?: return
+        splashOffline = true
+        splashHandler.removeCallbacksAndMessages(null)
+        splash.animate().cancel()
+        splash.alpha = 1f
+        splash.visibility = View.VISIBLE
+        findViewById<View>(R.id.splash_progress)?.visibility = View.GONE
+        findViewById<View>(R.id.splash_text)?.visibility = View.GONE
+        findViewById<View>(R.id.splash_offline_box)?.visibility = View.VISIBLE
+    }
+
+    // Retry button: back to the loading state and reload the site.
+    private fun retrySplashLoad() {
+        val splash = splashView ?: return
+        splashOffline = false
+        splashHidden = false
+        splashStartTime = SystemClock.uptimeMillis()
+        findViewById<View>(R.id.splash_offline_box)?.visibility = View.GONE
+        findViewById<ProgressBar>(R.id.splash_progress)?.let {
+            it.visibility = View.VISIBLE
+            it.progress = 0
+        }
+        findViewById<View>(R.id.splash_text)?.let {
+            it.visibility = View.VISIBLE
+            it.alpha = 1f
+        }
+        splashHandler.postDelayed({ hideSplash() }, 8000)
+        webView.reload()
     }
 
     private fun hideSplash() {
         val splash = splashView ?: return
-        if (splashHidden) return
+        if (splashHidden || splashOffline) return
         splashHidden = true
         // Let the intro animation be seen for at least 1.5s, then fade out.
         val elapsed = SystemClock.uptimeMillis() - splashStartTime
