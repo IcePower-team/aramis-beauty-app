@@ -129,8 +129,6 @@ class MainActivity : AppCompatActivity() {
         val navView = findViewById<NavigationView>(R.id.nav_view)
         navView.setNavigationItemSelectedListener { item: MenuItem ->
             when (item.itemId) {
-                R.id.nav_home -> loadUrl(HOME_URL)
-                R.id.nav_cart -> loadUrl(CART_URL)
                 R.id.nav_makeup_face -> loadUrl("https://aramis-beauty.ir/category/3")
                 R.id.nav_makeup_eyes -> loadUrl("https://aramis-beauty.ir/category/4")
                 R.id.nav_makeup_brows -> loadUrl("https://aramis-beauty.ir/category/5")
@@ -147,8 +145,18 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
+        // Fixed home / cart rows above the scrolling categories list
+        findViewById<View>(R.id.row_home).setOnClickListener {
+            loadUrl(HOME_URL)
+            drawer.closeDrawers()
+        }
+        findViewById<View>(R.id.row_cart).setOnClickListener {
+            loadUrl(CART_URL)
+            drawer.closeDrawers()
+        }
+
         // Login / register buttons in the drawer header
-        val header = navView.getHeaderView(0)
+        val header = findViewById<View>(R.id.drawer_header)
         headerView = header
         header.findViewById<Button>(R.id.btn_login).setOnClickListener {
             loadUrl(LOGIN_URL)
@@ -174,18 +182,18 @@ class MainActivity : AppCompatActivity() {
         })
 
         // Social links at the bottom of the drawer
-        navView.findViewById<ImageButton>(R.id.social_telegram).setOnClickListener {
+        findViewById<ImageButton>(R.id.social_telegram).setOnClickListener {
             openExternal(TELEGRAM_URL)
         }
-        navView.findViewById<ImageButton>(R.id.social_rubika).setOnClickListener {
+        findViewById<ImageButton>(R.id.social_rubika).setOnClickListener {
             openExternal(RUBIKA_URL)
         }
-        navView.findViewById<ImageButton>(R.id.social_instagram).setOnClickListener {
+        findViewById<ImageButton>(R.id.social_instagram).setOnClickListener {
             openExternal(INSTAGRAM_URL)
         }
 
         // Installed version, shown at the bottom of the drawer
-        navView.findViewById<TextView>(R.id.drawer_version)?.text =
+        findViewById<TextView>(R.id.drawer_version)?.text =
             "نسخه ${toFaDigits(currentVersionName())}"
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {

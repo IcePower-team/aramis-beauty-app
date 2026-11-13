@@ -40,25 +40,148 @@
 
     </LinearLayout>
 
-    <com.google.android.material.navigation.NavigationView
-        android:id="@+id/nav_view"
+    <LinearLayout
         android:layout_width="300dp"
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:background="@color/drawer_bg"
         android:fitsSystemWindows="true"
-        app:headerLayout="@layout/nav_header_main"
-        app:itemBackground="@drawable/drawer_item_background"
-        app:itemHorizontalPadding="12dp"
-        app:itemIconPadding="12dp"
-        app:itemIconTint="@color/drawer_item_text"
-        app:itemTextColor="@color/drawer_item_text"
-        app:menu="@menu/drawer_menu">
+        android:orientation="vertical">
+
+        <include
+            android:id="@+id/drawer_header"
+            layout="@layout/nav_header_main"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <!-- Fixed quick actions: home + cart (never scroll away) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingTop="12dp"
+            android:paddingBottom="8dp">
+
+            <LinearLayout
+                android:id="@+id/row_home"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp">
+
+                <LinearLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/drawer_icon_chip"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="@string/nav_home"
+                        android:src="@drawable/ic_home"
+                        android:tint="@color/burgundy" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:text="@string/nav_home"
+                    android:textColor="@color/drawer_text"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/row_cart"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="4dp"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingStart="20dp"
+                android:paddingEnd="20dp">
+
+                <LinearLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@drawable/drawer_icon_chip"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="@string/nav_cart"
+                        android:src="@drawable/ic_cart"
+                        android:tint="@color/burgundy" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:text="@string/nav_cart"
+                    android:textColor="@color/drawer_text"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Categories section label (fixed above the scrolling list) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✦ دسته‌بندی‌ها"
+                android:textColor="@color/gold"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:alpha="0.4"
+                android:background="@color/gold" />
+        </LinearLayout>
+
+        <!-- Only the categories list scrolls -->
+        <com.google.android.material.navigation.NavigationView
+            android:id="@+id/nav_view"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            app:itemBackground="@drawable/drawer_item_background"
+            app:itemHorizontalPadding="12dp"
+            app:itemIconPadding="12dp"
+            app:itemIconTint="@color/drawer_item_text"
+            app:itemTextColor="@color/drawer_item_text"
+            app:menu="@menu/drawer_categories_menu" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
             android:background="@color/drawer_bg"
             android:clickable="true"
             android:focusable="true"
@@ -178,6 +301,6 @@
                 android:textSize="12sp" />
         </LinearLayout>
 
-    </com.google.android.material.navigation.NavigationView>
+    </LinearLayout>
 
 </androidx.drawerlayout.widget.DrawerLayout>
