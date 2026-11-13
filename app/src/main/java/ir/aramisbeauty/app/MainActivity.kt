@@ -1,8 +1,12 @@
 package ir.aramisbeauty.app
 
+import android.Manifest
 import android.app.Dialog
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.ConnectivityManager
@@ -39,9 +43,12 @@ import java.net.URL
 import java.net.URLEncoder
 import org.json.JSONObject
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
+import com.google.firebase.messaging.FirebaseMessaging
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -76,6 +83,8 @@ class MainActivity : AppCompatActivity() {
     private var splashOffline = false
     private var splashStartTime = 0L
     private val splashHandler = Handler(Looper.getMainLooper())
+    private val requestNotificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { _ -> }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -256,9 +265,47 @@ class MainActivity : AppCompatActivity() {
         // is ready (never later than 8s, so it can never trap the user).
         startSplash()
 
+        // Push notifications: channel, topic subscription, permission.
+        setupNotifications()
+
         // Check GitHub for a newer release; shows the update dialog only
         // when one exists (silent when offline or already up to date).
         checkForUpdate()
+    }
+
+    // Push notifications (Firebase Cloud Messaging): create the channel,
+    // join the "all" topic so console sends reach this device, and ask
+    // for the runtime notification permission on Android 13+.
+    private fun setupNotifications() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            nm.createNotificationChannel(
+                NotificationChannel(
+                    AramisMessagingService.CHANNEL_ID,
+                    "اطلاع‌رسانی آرامیس بیوتی",
+                    NotificationManager.IMPORTANCE_DEFAULT
+                )
+            )
+        }
+        FirebaseMessaging.getInstance().subscribeToTopic(AramisMessagingService.TOPIC_ALL)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(
+                    this, Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    // Notification taps (and deep links) carry the shop URL in the intent;
+    // load it when the activity is already running.
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intent.data?.toString()?.takeIf {
+            it.startsWith("https://aramis-beauty.ir/")
+        }?.let { loadUrl(it) }
     }
 
     private fun startSplash() {
