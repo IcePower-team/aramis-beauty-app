@@ -237,9 +237,13 @@ object Catalog {
      * site finds its products; the chat's live check corrects price and
      * stock at display time. The quiz filters this same list by id, and
      * its 17 ids all resolve to curated entries. */
-    val products: List<ShopProduct> = run {
+    /** Curated entries win on conflicts; everything else comes from the
+     * site list (bundled snapshot or the downloaded catalog.json). */
+    fun merge(siteList: List<ShopProduct>): List<ShopProduct> {
         val byId = curatedProducts.associateBy { it.id }.toMutableMap()
-        siteProducts.forEach { if (it.id !in byId) byId[it.id] = it }
-        byId.values.toList()
+        siteList.forEach { if (it.id !in byId) byId[it.id] = it }
+        return byId.values.toList()
     }
+
+    val products: List<ShopProduct> = merge(siteProducts)
 }

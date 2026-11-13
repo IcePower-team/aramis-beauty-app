@@ -69,7 +69,10 @@ object AdvisorEngine {
     private fun relatedHits(product: Catalog.ShopProduct, inputTokens: List<String>): Int =
         hits(product.relatedKeywords, inputTokens)
 
-    fun answer(rawInput: String): Reply {
+    fun answer(
+        rawInput: String,
+        products: List<Catalog.ShopProduct> = Catalog.products
+    ): Reply {
         val n = normalize(rawInput)
         if (n.isBlank()) {
             return Reply("چیزی ننوشتی 😊 سؤالت رو بنویس — مثلاً «برای پوست چرب چی خوبه؟»", emptyList())
@@ -102,7 +105,7 @@ object AdvisorEngine {
             val amount = under.groupValues[1].toIntOrNull() ?: 0
             val limit = if (under.groupValues[2].isNotEmpty()) amount * 1000 else amount
             if (limit > 0) {
-                val picks = Catalog.products
+                val picks = products
                     .filter { it.priceToman <= limit }
                     .sortedWith(inStockFirstByPrice)
                     .take(20)
@@ -117,14 +120,14 @@ object AdvisorEngine {
 
         // Cheapest / discount
         if (t.any { it in setOf("ارزون", "ارزان", "ارزونترین", "ارزانترین") }) {
-            val picks = Catalog.products.sortedWith(inStockFirstByPrice).take(20)
+            val picks = products.sortedWith(inStockFirstByPrice).take(20)
             return Reply("ارزون‌ترین‌های فروشگاه — ${faNum(picks.size)} تا، از ارزون به گرون 👇", picks)
         }
         if ("تخفیف" in t) {
             val picks = listOfNotNull(
-                Catalog.products.firstOrNull { it.id == 470 },
-                Catalog.products.firstOrNull { it.id == 503 },
-                Catalog.products.firstOrNull { it.id == 474 }
+                products.firstOrNull { it.id == 470 },
+                products.firstOrNull { it.id == 503 },
+                products.firstOrNull { it.id == 474 }
             )
             return Reply(
                 "اسپری فیکس شیگلم الان ۲۱٪ تخفیف داره! 🎉 اینا هم ارزون‌ترین‌هستن 👇",
@@ -135,9 +138,9 @@ object AdvisorEngine {
         // Bestsellers
         if (t.any { it in setOf("بهترین", "پرفروش", "محبوب", "پرفروشترین") }) {
             val picks = listOfNotNull(
-                Catalog.products.firstOrNull { it.id == 484 },
-                Catalog.products.firstOrNull { it.id == 485 },
-                Catalog.products.firstOrNull { it.id == 494 }
+                products.firstOrNull { it.id == 484 },
+                products.firstOrNull { it.id == 485 },
+                products.firstOrNull { it.id == 494 }
             )
             return Reply("پرفروش‌ترین‌های فروشگاه 👇", picks)
         }
@@ -176,7 +179,7 @@ object AdvisorEngine {
             val related: Int,
             val tagScore: Int
         )
-        val scored = Catalog.products.map { p ->
+        val scored = products.map { p ->
             Scored(
                 p,
                 primaryHits(p, t),

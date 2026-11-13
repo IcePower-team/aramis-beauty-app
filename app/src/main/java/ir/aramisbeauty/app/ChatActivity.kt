@@ -39,6 +39,11 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var chipsContainer: LinearLayout
     private lateinit var input: EditText
 
+    /** The catalog the advisor searches: bundled snapshot, replaced by
+     * the downloaded catalog.json (cached) as soon as it is available,
+     * so new products reach the advisor without an app update. */
+    private var productList: List<Catalog.ShopProduct> = Catalog.products
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
@@ -67,6 +72,16 @@ class ChatActivity : AppCompatActivity() {
             isUser = false
         )
         setChips(AdvisorEngine.defaultChips)
+
+        // Fresh catalog: the cached download first, then a background
+        // refresh from the repo. New products appear in the advisor
+        // without any app update; the bundled snapshot stays as fallback.
+        RemoteCatalog.loadCached(this)?.let { productList = Catalog.merge(it) }
+        Thread {
+            RemoteCatalog.fetch(this)?.let { fresh ->
+                productList = Catalog.merge(fresh)
+            }
+        }.start()
     }
 
     private fun sendCurrentInput() {
@@ -78,7 +93,7 @@ class ChatActivity : AppCompatActivity() {
 
     private fun sendMessage(text: String) {
         addTextMessage(text, isUser = true)
-        val reply = AdvisorEngine.answer(text)
+        val reply = AdvisorEngine.answer(text, productList)
         addTextMessage(reply.text, isUser = false)
         if (reply.products.isNotEmpty()) {
             reply.products.forEach { product ->
