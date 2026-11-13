@@ -15,4 +15,10 @@
         android:title="@string/nav_cart"
         app:showAsAction="ifRoom" />
 
+    <item
+        android:id="@+id/action_home"
+        android:title="@string/nav_home"
+        app:actionLayout="@layout/toolbar_home_button"
+        app:showAsAction="always" />
+
 </menu>

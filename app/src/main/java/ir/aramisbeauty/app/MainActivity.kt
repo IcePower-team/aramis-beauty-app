@@ -213,6 +213,10 @@ class MainActivity : AppCompatActivity() {
             }
             override fun onQueryTextChange(newText: String?): Boolean = false
         })
+        // Home button (house emoji) — a custom action view, so it needs its own click listener
+        menu.findItem(R.id.action_home)?.actionView?.setOnClickListener {
+            loadUrl(HOME_URL)
+        }
         return true
     }
 
