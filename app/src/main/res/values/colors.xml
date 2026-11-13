@@ -5,6 +5,9 @@
     <color name="header_top">#081828</color>
     <color name="burgundy_light">#8E1538</color>
     <color name="gold">#C9A227</color>
+    <color name="drawer_bg">#FDF8F6</color>
+    <color name="drawer_text">#3A3A3A</color>
+    <color name="drawer_item_bg_checked">#F6E3E8</color>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     <color name="gray_text">#666666</color>

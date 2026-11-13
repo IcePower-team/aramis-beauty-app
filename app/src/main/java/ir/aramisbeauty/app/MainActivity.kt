@@ -166,6 +166,10 @@ class MainActivity : AppCompatActivity() {
             openExternal(INSTAGRAM_URL)
         }
 
+        // Installed version, shown at the bottom of the drawer
+        navView.findViewById<TextView>(R.id.drawer_version)?.text =
+            "نسخه ${toFaDigits(currentVersionName())}"
+
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 when {
