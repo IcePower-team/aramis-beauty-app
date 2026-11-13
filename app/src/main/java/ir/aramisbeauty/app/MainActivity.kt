@@ -121,20 +121,7 @@ class MainActivity : AppCompatActivity() {
 
             override fun onPageFinished(view: WebView, url: String) {
                 swipe.isRefreshing = false
-                // Detect whether the user is logged in to the shop: the
-                // logged-in header carries a "خروج" (logout) link, which the
-                // logged-out page never contains. The drawer header then
-                // swaps ورود/عضویت for مشاهده پروفایل.
-                val host = try {
-                    android.net.Uri.parse(url).host ?: ""
-                } catch (_: Exception) {
-                    ""
-                }
-                if (host == "aramis-beauty.ir" || host.endsWith(".aramis-beauty.ir")) {
-                    view.evaluateJavascript(
-                        "(function(){return document.body && document.body.innerHTML.indexOf('خروج') !== -1;})()"
-                    ) { result -> updateAuthButtons(result == "true") }
-                }
+                checkLoginState()
             }
         }
         webView.webChromeClient = WebChromeClient()
@@ -175,6 +162,16 @@ class MainActivity : AppCompatActivity() {
             loadUrl(PANEL_URL)
             drawer.closeDrawers()
         }
+
+        // Re-check the login state every time the drawer opens, so the
+        // header buttons are right even if the state changed without a
+        // fresh page load in between.
+        drawer.addDrawerListener(object : DrawerLayout.DrawerListener {
+            override fun onDrawerSlide(drawerView: View, slideOffset: Float) {}
+            override fun onDrawerOpened(drawerView: View) { checkLoginState() }
+            override fun onDrawerClosed(drawerView: View) {}
+            override fun onDrawerStateChanged(newState: Int) {}
+        })
 
         // Social links at the bottom of the drawer
         navView.findViewById<ImageButton>(R.id.social_telegram).setOnClickListener {
@@ -235,6 +232,29 @@ class MainActivity : AppCompatActivity() {
             override fun onQueryTextChange(newText: String?): Boolean = false
         })
         return true
+    }
+
+    // Detect whether the user is logged in to the shop and swap the drawer
+    // header buttons accordingly. Two signals, either is enough: the
+    // logged-in header carries a "خروج" (logout) link, and the header's
+    // login link ("/login?backurl=") disappears once logged in. The footer
+    // keeps a plain "/login" link either way, so only the backurl form is
+    // used as the signal.
+    private fun checkLoginState() {
+        val currentUrl = try {
+            webView.url
+        } catch (_: Exception) {
+            null
+        } ?: return
+        val host = try {
+            android.net.Uri.parse(currentUrl).host ?: ""
+        } catch (_: Exception) {
+            ""
+        }
+        if (host != "aramis-beauty.ir" && !host.endsWith(".aramis-beauty.ir")) return
+        webView.evaluateJavascript(
+            "(function(){var h=document.body?document.body.innerHTML:'';return h.indexOf('خروج')!==-1||h.indexOf('login?backurl=')===-1;})()"
+        ) { result -> updateAuthButtons(result == "true") }
     }
 
     // Swap the drawer header buttons by login state: logged in -> a single
