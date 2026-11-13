@@ -52,8 +52,11 @@ object AdvisorEngine {
 
     private fun hits(keywords: Set<String>, inputTokens: List<String>): Int {
         val set = inputTokens.toSet()
+        // Keywords are normalized the same way as the input — otherwise
+        // a keyword with آ (e.g. "آرسلار") would never match the
+        // normalized input token ("ارسلار").
         return keywords.count { kw ->
-            kw.split(" ").all { it in set }
+            normalize(kw).split(" ").all { it in set }
         }
     }
 
