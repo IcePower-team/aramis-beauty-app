@@ -138,7 +138,7 @@ class ChatActivity : AppCompatActivity() {
                 textSize = 13f
                 typeface = quizFont
                 background = ContextCompat.getDrawable(
-                    this@ChatActivity, R.drawable.quiz_button_outline
+                    this@ChatActivity, R.drawable.glass_chip
                 )
                 setPadding(dp(16), dp(10), dp(16), dp(10))
                 layoutParams = LinearLayout.LayoutParams(

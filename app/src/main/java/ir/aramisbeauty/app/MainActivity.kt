@@ -8,6 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.graphics.RenderEffect
+import android.graphics.Shader
 import android.graphics.drawable.ColorDrawable
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
@@ -23,6 +25,8 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.animation.DecelerateInterpolator
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
@@ -30,12 +34,13 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
-import android.widget.ImageButton
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.FileProvider
+import androidx.core.view.GravityCompat
 import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
@@ -112,6 +117,9 @@ class MainActivity : AppCompatActivity() {
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
         webView.settings.databaseEnabled = true
+        // The floating glass bottom nav overlays the WebView: keep the
+        // site's bottom content above it.
+        webView.setPadding(0, 0, 0, (96 * resources.displayMetrics.density).toInt())
         CookieManager.getInstance().setAcceptCookie(true)
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(
@@ -145,6 +153,8 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView, url: String) {
                 swipe.isRefreshing = false
                 checkLoginState()
+                updateBottomNav(url)
+                updateCartBadge()
                 hideSplash()
             }
 
@@ -245,23 +255,58 @@ class MainActivity : AppCompatActivity() {
 
         // Re-check the login state every time the drawer opens, so the
         // header buttons are right even if the state changed without a
-        // fresh page load in between.
+        // fresh page load in between. While the drawer is open the
+        // content behind its frosted panel is really blurred (API 31+).
         drawer.addDrawerListener(object : DrawerLayout.DrawerListener {
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) {}
-            override fun onDrawerOpened(drawerView: View) { checkLoginState() }
-            override fun onDrawerClosed(drawerView: View) {}
+            override fun onDrawerOpened(drawerView: View) {
+                checkLoginState()
+                setContentBlur(true)
+            }
+            override fun onDrawerClosed(drawerView: View) { setContentBlur(false) }
             override fun onDrawerStateChanged(newState: Int) {}
         })
 
         // Social links at the bottom of the drawer
-        findViewById<ImageButton>(R.id.social_telegram).setOnClickListener {
+        findViewById<View>(R.id.social_telegram).setOnClickListener {
             openExternal(TELEGRAM_URL)
         }
-        findViewById<ImageButton>(R.id.social_rubika).setOnClickListener {
+        findViewById<View>(R.id.social_rubika).setOnClickListener {
             openExternal(RUBIKA_URL)
         }
-        findViewById<ImageButton>(R.id.social_instagram).setOnClickListener {
+        findViewById<View>(R.id.social_instagram).setOnClickListener {
             openExternal(INSTAGRAM_URL)
+        }
+
+        // Floating glass bottom nav: home / categories (drawer) /
+        // cart / profile. Back-press behavior is unchanged (WebView
+        // history first, then exit).
+        findViewById<View>(R.id.bottom_nav_home).setOnClickListener {
+            loadUrl(HOME_URL)
+        }
+        findViewById<View>(R.id.bottom_nav_categories).setOnClickListener {
+            drawer.openDrawer(GravityCompat.START)
+        }
+        findViewById<View>(R.id.bottom_nav_cart).setOnClickListener {
+            loadUrl(CART_URL)
+        }
+        findViewById<View>(R.id.bottom_nav_profile).setOnClickListener {
+            loadUrl(PANEL_URL)
+        }
+
+        // Glass search pill: same search as the toolbar action.
+        val glassSearch = findViewById<EditText>(R.id.glass_search_input)
+        glassSearch.setOnEditorActionListener { v, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                val q = v.text.toString().trim()
+                if (q.isNotEmpty()) {
+                    loadUrl(HOME_URL + "?search=" + URLEncoder.encode(q, "UTF-8"))
+                }
+                v.clearFocus()
+                (getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager)
+                    .hideSoftInputFromWindow(v.windowToken, 0)
+                true
+            } else false
         }
 
         // Installed version, shown at the bottom of the drawer
@@ -686,6 +731,79 @@ class MainActivity : AppCompatActivity() {
             ) {
                 launchInstaller(file)
             }
+        }
+    }
+
+    // Bottom nav active state, refreshed on every page load: gold for
+    // the section the user is on, white otherwise.
+    private fun updateBottomNav(url: String?) {
+        val path = try {
+            Uri.parse(url ?: "").path ?: ""
+        } catch (_: Exception) {
+            ""
+        }
+        val active = when {
+            path.isEmpty() || path == "/" -> R.id.bottom_nav_home
+            path.startsWith("/cart") -> R.id.bottom_nav_cart
+            path.startsWith("/panel") -> R.id.bottom_nav_profile
+            else -> -1
+        }
+        val gold = ContextCompat.getColor(this, R.color.glass_gold_text)
+        fun setItem(itemId: Int, iconId: Int, labelId: Int) {
+            val on = itemId == active
+            findViewById<ImageView>(iconId)?.setColorFilter(if (on) gold else Color.WHITE)
+            findViewById<TextView>(labelId)?.setTextColor(if (on) gold else Color.WHITE)
+        }
+        setItem(R.id.bottom_nav_home, R.id.bottom_nav_home_icon, R.id.bottom_nav_home_label)
+        setItem(
+            R.id.bottom_nav_categories,
+            R.id.bottom_nav_categories_icon,
+            R.id.bottom_nav_categories_label
+        )
+        setItem(R.id.bottom_nav_cart, R.id.bottom_nav_cart_icon, R.id.bottom_nav_cart_label)
+        setItem(
+            R.id.bottom_nav_profile,
+            R.id.bottom_nav_profile_icon,
+            R.id.bottom_nav_profile_label
+        )
+    }
+
+    // Cart badge: read the site's own header count
+    // (.rb_basket_total_count, present on every page). Shown only for
+    // a real count > 0; hidden whenever the read fails or the cart is
+    // empty — never faked.
+    private fun updateCartBadge() {
+        val badge = findViewById<TextView>(R.id.cart_badge) ?: return
+        webView.evaluateJavascript(
+            "(function(){var el=document.querySelector('.rb_basket_total_count');" +
+                "if(!el) return -1;var t=(el.textContent||'').replace(/[۰-۹]/g," +
+                "function(d){return '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)});var n=parseInt(t,10);" +
+                "return isNaN(n)?-1:n;})()"
+        ) { result ->
+            val count = result?.trim()?.toIntOrNull() ?: -1
+            if (count > 0) {
+                badge.text = toFaDigits(count.toString())
+                badge.visibility = View.VISIBLE
+            } else {
+                badge.visibility = View.GONE
+            }
+        }
+    }
+
+    // Real backdrop blur while the drawer is open (API 31+): the content
+    // behind the frosted drawer panel is blurred; cleared on close so
+    // the WebView is never left blurred.
+    private fun setContentBlur(blur: Boolean) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        val content = findViewById<View>(R.id.main_content) ?: return
+        try {
+            content.setRenderEffect(
+                if (blur) RenderEffect.createBlurEffect(18f, 18f, Shader.TileMode.CLAMP)
+                else null
+            )
+        } catch (_: Exception) {
+            // RenderEffect unsupported on this device; the drawer scrim
+            // and its frosted fill still apply.
         }
     }
 
