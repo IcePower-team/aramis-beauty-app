@@ -10,16 +10,15 @@
             <corners android:radius="28dp" />
         </shape>
     </item>
-    <item android:bottom="55%">
+    <item>
         <shape android:shape="rectangle">
             <gradient
                 android:angle="270"
+                android:centerColor="#00FFFFFF"
                 android:endColor="#00FFFFFF"
                 android:startColor="#59FFFFFF"
                 android:type="linear" />
-            <corners
-                android:topLeftRadius="28dp"
-                android:topRightRadius="28dp" />
+            <corners android:radius="28dp" />
         </shape>
     </item>
 </layer-list>
