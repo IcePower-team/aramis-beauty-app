@@ -273,6 +273,13 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.social_rubika).applyPressMorph()
         findViewById<View>(R.id.social_instagram).applyPressMorph()
 
+        // Privacy policy (v1.6.3): Cafe Bazaar requires the full text
+        // readable inside the app — opens the policy screen.
+        findViewById<View>(R.id.row_privacy).setOnClickListener {
+            startActivity(Intent(this, PrivacyPolicyActivity::class.java))
+            drawer.closeDrawers()
+        }
+
         // Installed version, shown at the bottom of the drawer
         findViewById<TextView>(R.id.drawer_version)?.text =
             "نسخه ${toFaDigits(currentVersionName())}"

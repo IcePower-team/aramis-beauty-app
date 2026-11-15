@@ -549,6 +549,19 @@
             </LinearLayout>
 
             <TextView
+                android:id="@+id/row_privacy"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="16dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="8dp"
+                android:text="@string/privacy_policy"
+                android:textColor="@color/gray_text"
+                android:textSize="13sp" />
+
+            <TextView
                 android:id="@+id/drawer_version"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

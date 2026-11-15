@@ -44,6 +44,12 @@
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="false" />
 
+        <!-- Privacy policy — full text readable in-app (Cafe Bazaar rule) -->
+        <activity
+            android:name=".PrivacyPolicyActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="false" />
+
         <!-- Shares the downloaded update APK with the system installer -->
         <provider
             android:name="androidx.core.content.FileProvider"
