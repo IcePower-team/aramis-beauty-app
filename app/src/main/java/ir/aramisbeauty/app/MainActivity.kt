@@ -268,6 +268,10 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.social_instagram).setOnClickListener {
             openExternal(INSTAGRAM_URL)
         }
+        // v1.6.2: Telegram-style press morph on the glass social circles.
+        findViewById<View>(R.id.social_telegram).applyPressMorph()
+        findViewById<View>(R.id.social_rubika).applyPressMorph()
+        findViewById<View>(R.id.social_instagram).applyPressMorph()
 
         // Installed version, shown at the bottom of the drawer
         findViewById<TextView>(R.id.drawer_version)?.text =

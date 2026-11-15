@@ -190,7 +190,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:text="@string/nav_home"
-                        android:textColor="@color/white"
+                        android:textColor="@color/drawer_text"
                         android:textSize="14sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -199,7 +199,7 @@
                     android:layout_width="1dp"
                     android:layout_height="32dp"
                     android:layout_gravity="center_vertical"
-                    android:background="#59FFFFFF" />
+                    android:background="#2E000000" />
 
                 <LinearLayout
                     android:id="@+id/row_cart"
@@ -234,7 +234,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:text="@string/nav_cart"
-                        android:textColor="@color/white"
+                        android:textColor="@color/drawer_text"
                         android:textSize="14sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -289,7 +289,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:text="@string/nav_quiz"
-                        android:textColor="@color/white"
+                        android:textColor="@color/drawer_text"
                         android:textSize="14sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -298,7 +298,7 @@
                     android:layout_width="1dp"
                     android:layout_height="32dp"
                     android:layout_gravity="center_vertical"
-                    android:background="#59FFFFFF" />
+                    android:background="#2E000000" />
 
                 <LinearLayout
                     android:id="@+id/row_advisor"
@@ -333,7 +333,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
                         android:text="@string/nav_advisor"
-                        android:textColor="@color/white"
+                        android:textColor="@color/drawer_text"
                         android:textSize="14sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -419,7 +419,7 @@
                 android:layout_marginStart="20dp"
                 android:layout_marginEnd="20dp"
                 android:layout_marginBottom="12dp"
-                android:background="#59FFFFFF" />
+                android:background="#2E000000" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -427,9 +427,11 @@
                 android:layout_gravity="center"
                 android:layout_marginBottom="10dp"
                 android:text="ما رو دنبال کن 💬"
-                android:textColor="#BFD0DE"
+                android:textColor="@color/gray_text"
                 android:textSize="13sp" />
 
+            <!-- v1.6.2 Telegram-style: light glass circles with the
+                 platform icon inside, label beneath each circle. -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -439,86 +441,108 @@
                 <LinearLayout
                     android:id="@+id/social_telegram"
                     android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:background="@drawable/glass_chip"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="12dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center"
-                    android:orientation="horizontal"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp">
+                    android:orientation="vertical">
 
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:contentDescription="@string/social_telegram"
-                        android:src="@drawable/ic_telegram" />
+                    <FrameLayout
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:background="@drawable/glass_circle"
+                        android:padding="16dp">
+
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:contentDescription="@string/social_telegram"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_telegram"
+                            android:tint="@color/telegram_blue" />
+                    </FrameLayout>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
+                        android:layout_marginTop="6dp"
                         android:text="@string/social_telegram"
-                        android:textColor="@color/white"
-                        android:textSize="13sp"
+                        android:textColor="@color/drawer_text"
+                        android:textSize="12sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/social_rubika"
                     android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:layout_marginStart="8dp"
-                    android:layout_marginEnd="8dp"
-                    android:background="@drawable/glass_chip"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="12dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center"
-                    android:orientation="horizontal"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp">
+                    android:orientation="vertical">
 
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:contentDescription="@string/social_rubika"
-                        android:src="@drawable/ic_rubika" />
+                    <FrameLayout
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:background="@drawable/glass_circle"
+                        android:padding="16dp">
+
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:contentDescription="@string/social_rubika"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_rubika"
+                            android:tint="@color/rubika_purple" />
+                    </FrameLayout>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
+                        android:layout_marginTop="6dp"
                         android:text="@string/social_rubika"
-                        android:textColor="@color/white"
-                        android:textSize="13sp"
+                        android:textColor="@color/drawer_text"
+                        android:textSize="12sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/social_instagram"
                     android:layout_width="wrap_content"
-                    android:layout_height="40dp"
-                    android:background="@drawable/glass_chip"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="12dp"
                     android:clickable="true"
                     android:focusable="true"
                     android:gravity="center"
-                    android:orientation="horizontal"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp">
+                    android:orientation="vertical">
 
-                    <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
-                        android:contentDescription="@string/social_instagram"
-                        android:src="@drawable/ic_instagram" />
+                    <FrameLayout
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:background="@drawable/glass_circle"
+                        android:padding="16dp">
+
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:contentDescription="@string/social_instagram"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_instagram"
+                            android:tint="@color/instagram_pink" />
+                    </FrameLayout>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="6dp"
+                        android:layout_marginTop="6dp"
                         android:text="@string/social_instagram"
-                        android:textColor="@color/white"
-                        android:textSize="13sp"
+                        android:textColor="@color/drawer_text"
+                        android:textSize="12sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
@@ -530,7 +554,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginTop="14dp"
-                android:textColor="#BFD0DE"
+                android:textColor="@color/gray_text"
                 android:textSize="12sp" />
         </LinearLayout>
 

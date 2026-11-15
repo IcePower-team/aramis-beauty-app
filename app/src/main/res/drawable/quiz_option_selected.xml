@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Liquid-glass quiz option (selected): stronger frost, gold rim. -->
+<!-- Telegram-style quiz option (v1.6.2, selected): stronger frost, gold rim. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="#40FFFFFF" />
+    <solid android:color="#CCFFFFFF" />
     <stroke
         android:width="1.5dp"
         android:color="@color/gold" />

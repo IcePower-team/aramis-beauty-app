@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.WindowCompat
 import coil.load
 import java.util.Locale
 import java.util.concurrent.Executors
@@ -70,7 +71,11 @@ class QuizActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_quiz)
         supportActionBar?.hide()
-        window.statusBarColor = Color.parseColor("#081828")
+        // v1.6.2: light Telegram-style glass screens — light status bar
+        // with dark icons to match.
+        window.statusBarColor = Color.parseColor("#FDF6F0")
+        WindowCompat.getInsetsController(window, window.decorView)
+            .isAppearanceLightStatusBars = true
         quizFont = ResourcesCompat.getFont(this, R.font.vazirmatn)
         quizFontBold = ResourcesCompat.getFont(this, R.font.vazirmatn_bold)
 
@@ -157,7 +162,7 @@ class QuizActivity : AppCompatActivity() {
         }
         val label = TextView(this).apply {
             this.text = text
-            setTextColor(Color.WHITE)
+            setTextColor(ContextCompat.getColor(this@QuizActivity, R.color.burgundy_dark))
             textSize = 16f
             typeface = quizFont
             layoutParams = LinearLayout.LayoutParams(
@@ -168,6 +173,7 @@ class QuizActivity : AppCompatActivity() {
         row.addView(dot)
         row.addView(label)
         row.setOnClickListener { selectOption(questionIndex, optionIndex) }
+        row.applyPressMorph()
         return row
     }
 
@@ -317,7 +323,7 @@ class QuizActivity : AppCompatActivity() {
         }
         val name = TextView(this).apply {
             text = item.displayName
-            setTextColor(Color.WHITE)
+            setTextColor(ContextCompat.getColor(this@QuizActivity, R.color.burgundy_dark))
             textSize = 14f
             typeface = quizFontBold
             maxLines = 2
@@ -337,7 +343,7 @@ class QuizActivity : AppCompatActivity() {
         if (item.inStock == false) {
             val badge = TextView(this).apply {
                 text = "ناموجود"
-                setTextColor(Color.parseColor("#FF8A80"))
+                setTextColor(Color.parseColor("#C62828"))
                 textSize = 12f
                 typeface = quizFont
                 layoutParams = LinearLayout.LayoutParams(

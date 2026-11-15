@@ -45,7 +45,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="آرامیس بیوتی ✨"
-                android:textColor="@color/glass_gold_light"
+                android:textColor="@color/burgundy_dark"
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
@@ -54,7 +54,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:text="فروشگاه آرایشی و بدلیجات"
-                android:textColor="#BFD0DE"
+                android:textColor="@color/gray_text"
                 android:textSize="13sp" />
         </LinearLayout>
     </LinearLayout>
@@ -94,9 +94,9 @@
             android:layout_height="46dp"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
-            android:background="@drawable/btn_outline_white_pill"
+            android:background="@drawable/btn_outline_dark_pill"
             android:text="@string/register"
-            android:textColor="@color/white"
+            android:textColor="@color/burgundy_dark"
             android:textSize="15sp"
             app:backgroundTint="@null" />
 

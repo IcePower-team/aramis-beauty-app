@@ -24,7 +24,7 @@
             android:background="@android:color/transparent"
             android:contentDescription="بستن"
             android:src="@android:drawable/ic_menu_close_clear_cancel"
-            android:tint="@color/white" />
+            android:tint="@color/burgundy_dark" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -33,7 +33,7 @@
             android:layout_marginTop="8dp"
             android:fontFamily="@font/vazirmatn"
             android:text="✦ کوئیز زیبایی"
-            android:textColor="@color/gold"
+            android:textColor="@color/burgundy_dark"
             android:textSize="22sp"
             android:textStyle="bold" />
 
@@ -44,7 +44,7 @@
             android:layout_marginTop="6dp"
             android:fontFamily="@font/vazirmatn"
             android:text="بگو چی بهت میاد، ستت رو بچینیم ✨"
-            android:textColor="#BFD0DE"
+            android:textColor="@color/gray_text"
             android:textSize="14sp" />
 
         <LinearLayout
@@ -60,7 +60,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="@font/vazirmatn"
                 android:text="سؤال ۱ از ۴"
-                android:textColor="#BFD0DE"
+                android:textColor="@color/gray_text"
                 android:textSize="13sp" />
 
             <ProgressBar
@@ -72,7 +72,7 @@
                 android:layout_weight="1"
                 android:max="4"
                 android:progress="0"
-                android:progressBackgroundTint="@color/quiz_option_border"
+                android:progressBackgroundTint="@color/drawer_item_bg_checked"
                 android:progressTint="@color/gold" />
         </LinearLayout>
 
@@ -84,7 +84,7 @@
             android:background="@drawable/glass_panel"
             android:fontFamily="@font/vazirmatn"
             android:padding="18dp"
-            android:textColor="@color/white"
+            android:textColor="@color/burgundy_dark"
             android:textSize="22sp"
             android:textStyle="bold" />
 
@@ -103,7 +103,7 @@
             android:background="@android:color/transparent"
             android:fontFamily="@font/vazirmatn"
             android:text="قبلی"
-            android:textColor="#BFD0DE"
+            android:textColor="@color/gray_text"
             android:textSize="15sp"
             android:visibility="gone" />
     </LinearLayout>
@@ -128,7 +128,7 @@
             android:layout_marginTop="16dp"
             android:fontFamily="@font/vazirmatn"
             android:text="دارم ستت رو آماده می‌کنم…"
-            android:textColor="@color/white"
+            android:textColor="@color/burgundy_dark"
             android:textSize="15sp" />
     </LinearLayout>
 
@@ -154,7 +154,7 @@
                 android:layout_gravity="center_horizontal"
                 android:fontFamily="@font/vazirmatn"
                 android:text="✦ ست تو آماده‌ست"
-                android:textColor="@color/gold"
+                android:textColor="@color/burgundy_dark"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -165,7 +165,7 @@
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="8dp"
                 android:fontFamily="@font/vazirmatn"
-                android:textColor="@color/white"
+                android:textColor="@color/burgundy_dark"
                 android:textSize="22sp"
                 android:textStyle="bold" />
 
@@ -177,7 +177,7 @@
                 android:layout_marginTop="8dp"
                 android:fontFamily="@font/vazirmatn"
                 android:textAlignment="center"
-                android:textColor="#BFD0DE"
+                android:textColor="@color/gray_text"
                 android:textSize="14sp" />
 
             <LinearLayout

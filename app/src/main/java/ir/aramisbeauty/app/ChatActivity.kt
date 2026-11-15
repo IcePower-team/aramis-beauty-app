@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.WindowCompat
 import coil.load
 import java.util.Locale
 import java.util.concurrent.Executors
@@ -48,7 +49,11 @@ class ChatActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat)
         supportActionBar?.hide()
-        window.statusBarColor = Color.parseColor("#081828")
+        // v1.6.2: light Telegram-style glass screens — light status bar
+        // with dark icons to match.
+        window.statusBarColor = Color.parseColor("#FDF6F0")
+        WindowCompat.getInsetsController(window, window.decorView)
+            .isAppearanceLightStatusBars = true
         quizFont = ResourcesCompat.getFont(this, R.font.vazirmatn)
         quizFontBold = ResourcesCompat.getFont(this, R.font.vazirmatn_bold)
 
@@ -59,6 +64,7 @@ class ChatActivity : AppCompatActivity() {
 
         findViewById<View>(R.id.chat_close).setOnClickListener { finish() }
         findViewById<View>(R.id.chat_send).setOnClickListener { sendCurrentInput() }
+        findViewById<View>(R.id.chat_send).applyPressMorph()
         input.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEND) {
                 sendCurrentInput()
@@ -134,7 +140,7 @@ class ChatActivity : AppCompatActivity() {
         chips.forEach { chipText ->
             val chip = TextView(this).apply {
                 text = chipText
-                setTextColor(ContextCompat.getColor(this@ChatActivity, R.color.gold))
+                setTextColor(ContextCompat.getColor(this@ChatActivity, R.color.burgundy_dark))
                 textSize = 13f
                 typeface = quizFont
                 background = ContextCompat.getDrawable(
@@ -152,6 +158,7 @@ class ChatActivity : AppCompatActivity() {
                         sendMessage(chipText)
                     }
                 }
+                applyPressMorph()
             }
             chipsContainer.addView(chip)
         }
@@ -160,7 +167,8 @@ class ChatActivity : AppCompatActivity() {
     private fun addTextMessage(text: String, isUser: Boolean) {
         val bubble = TextView(this).apply {
             this.text = text
-            setTextColor(Color.WHITE)
+            // v1.6.2: dark text on the light Telegram-style glass bubbles.
+            setTextColor(ContextCompat.getColor(this@ChatActivity, R.color.burgundy_dark))
             textSize = 15f
             typeface = quizFont
             background = ContextCompat.getDrawable(
@@ -217,7 +225,7 @@ class ChatActivity : AppCompatActivity() {
         }
         val name = TextView(this).apply {
             text = product.name
-            setTextColor(Color.WHITE)
+            setTextColor(ContextCompat.getColor(this@ChatActivity, R.color.burgundy_dark))
             textSize = 14f
             typeface = quizFontBold
             maxLines = 2
@@ -235,7 +243,7 @@ class ChatActivity : AppCompatActivity() {
         }
         val badge = TextView(this).apply {
             text = "ناموجود"
-            setTextColor(Color.parseColor("#FF8A80"))
+            setTextColor(Color.parseColor("#C62828"))
             textSize = 12f
             typeface = quizFont
             tag = "badge"
