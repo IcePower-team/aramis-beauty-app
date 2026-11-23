@@ -503,38 +503,10 @@ class MainActivity : AppCompatActivity() {
     // ---- In-app update (GitHub releases) ----
 
     private fun checkForUpdate() {
-        Thread {
-            try {
-                val conn = (URL(UPDATE_CHECK_URL).openConnection() as HttpURLConnection).apply {
-                    requestMethod = "GET"
-                    setRequestProperty("Accept", "application/vnd.github+json")
-                    setRequestProperty("User-Agent", "AramisBeauty-App")
-                    connectTimeout = 8000
-                    readTimeout = 8000
-                }
-                if (conn.responseCode != HttpURLConnection.HTTP_OK) return@Thread
-                val json = JSONObject(conn.inputStream.bufferedReader().readText())
-                val tag = json.optString("tag_name", "").removePrefix("v")
-                val notes = json.optString("body", "")
-                var apkUrl: String? = null
-                val assets = json.optJSONArray("assets")
-                if (assets != null) {
-                    for (i in 0 until assets.length()) {
-                        val asset = assets.getJSONObject(i)
-                        if (asset.optString("name") == "app-release.apk") {
-                            apkUrl = asset.optString("browser_download_url")
-                            break
-                        }
-                    }
-                }
-                if (tag.isEmpty() || apkUrl.isNullOrEmpty()) return@Thread
-                if (compareVersions(tag, currentVersionName()) > 0) {
-                    runOnUiThread { showUpdateDialog(tag, notes, apkUrl) }
-                }
-            } catch (_: Exception) {
-                // Silent: no network / API down — just don't show the dialog.
-            }
-        }.start()
+        // Disabled 2026-11-23: Cafe Bazaar rejects REQUEST_INSTALL_PACKAGES,
+        // so the in-app update flow (GitHub APK download + install) is off.
+        // Updates come only from Cafe Bazaar now.
+        return
     }
 
     private fun currentVersionName(): String {
