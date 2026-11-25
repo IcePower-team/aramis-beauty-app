@@ -16,11 +16,9 @@ import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -36,19 +34,13 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.widget.SearchView
-import androidx.core.content.FileProvider
-import java.io.File
-import java.io.FileOutputStream
-import java.net.HttpURLConnection
-import java.net.URL
+import androidx.core.content.ContextCompat
 import java.net.URLEncoder
-import org.json.JSONObject
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
-import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessaging
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.drawerlayout.widget.DrawerLayout
@@ -66,10 +58,6 @@ class MainActivity : AppCompatActivity() {
         const val TELEGRAM_URL = "https://t.me/AramisBeauty_Ch"
         const val RUBIKA_URL = "https://rubika.ir/joing/HCIBADFA0JCEETLQHXTIJKEXVSMCNMYU"
         const val INSTAGRAM_URL = "https://www.instagram.com/aramisbeauty.shop"
-        // In-app update: latest GitHub release of this app (public repo).
-        const val UPDATE_CHECK_URL =
-            "https://api.github.com/repos/IcePower-team/aramis-beauty-app/releases/latest"
-        const val INSTALL_PERMISSION_REQUEST = 1001
     }
 
     private lateinit var drawer: DrawerLayout
@@ -77,7 +65,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var swipe: SwipeRefreshLayout
     private var headerView: View? = null
     private var updateDialog: Dialog? = null
-    private var pendingApkFile: File? = null
+    // Product id of the page currently shown in the WebView, if any —
+    // drives the "خبرم کن" toolbar button.
+    private var currentProductId: Int? = null
     // Animated launch splash (shown while the site loads, then fades out)
     private var splashView: View? = null
     private var splashHidden = false
@@ -146,6 +136,7 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView, url: String) {
                 swipe.isRefreshing = false
                 checkLoginState()
+                updateNotifyMenu()
                 hideSplash()
             }
 
@@ -204,6 +195,14 @@ class MainActivity : AppCompatActivity() {
         }
         findViewById<View>(R.id.row_advisor).setOnClickListener {
             startActivity(Intent(this, ChatActivity::class.java))
+            drawer.closeDrawers()
+        }
+        findViewById<View>(R.id.row_deals).setOnClickListener {
+            startActivity(Intent(this, DealsActivity::class.java))
+            drawer.closeDrawers()
+        }
+        findViewById<View>(R.id.row_routine).setOnClickListener {
+            startActivity(Intent(this, RoutineActivity::class.java))
             drawer.closeDrawers()
         }
 
@@ -313,8 +312,8 @@ class MainActivity : AppCompatActivity() {
         // Push notifications: channel, topic subscription, permission.
         setupNotifications()
 
-        // Check GitHub for a newer release; shows the update dialog only
-        // when one exists (silent when offline or already up to date).
+        // Check update.json for a newer version; shows the update dialog
+        // only when one exists (silent when offline or already up to date).
         checkForUpdate()
     }
 
@@ -486,6 +485,17 @@ class MainActivity : AppCompatActivity() {
             if (loggedIn) View.VISIBLE else View.GONE
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        val notifyItem = menu.findItem(R.id.action_notify)
+        val id = currentProductId
+        notifyItem?.isVisible = id != null
+        if (id != null) {
+            notifyItem?.title =
+                if (NotifyMe.isSubscribed(this, id)) "🔔 خبرت می‌کنم" else "🔔 خبرم کن"
+        }
+        return super.onPrepareOptionsMenu(menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_cart -> {
@@ -496,17 +506,64 @@ class MainActivity : AppCompatActivity() {
                 loadUrl(HOME_URL)
                 true
             }
+            R.id.action_notify -> {
+                currentProductId?.let { NotifyMe.toggle(this, it) }
+                invalidateOptionsMenu()
+                true
+            }
             else -> super.onOptionsItemSelected(item)
         }
     }
 
-    // ---- In-app update (GitHub releases) ----
+    // "خبرم کن": the toolbar bell is only visible on a product page
+    // (https://aramis-beauty.ir/product/<id>); everywhere else the
+    // button hides so it never confuses.
+    private fun updateNotifyMenu() {
+        val url = try {
+            webView.url
+        } catch (_: Exception) {
+            null
+        } ?: return
+        val match = Regex("^https://aramis-beauty\\.ir/product/(\\d+)")
+            .find(url.trim())
+        val id = match?.groupValues?.getOrNull(1)?.toIntOrNull()
+        if (id != currentProductId) {
+            currentProductId = id
+            invalidateOptionsMenu()
+        }
+    }
+
+    // ---- In-app update (remote config -> Cafe Bazaar) ----
+    //
+    // v1.6.9: on every open, update.json is fetched from the repo (same
+    // hosting as catalog.json). When its latest_version_code is higher
+    // than the installed versionCode, a dialog links out to Cafe
+    // Bazaar. No APK is downloaded here — Bazaar rejects
+    // REQUEST_INSTALL_PACKAGES, so updates come only from Bazaar.
+    // A fetch failure is silent: no popup, the app works normally.
+    // "Later" remembers the dismissed version, so it does not nag on
+    // every open; a forced update has no "Later" button at all.
 
     private fun checkForUpdate() {
-        // Disabled 2026-11-23: Cafe Bazaar rejects REQUEST_INSTALL_PACKAGES,
-        // so the in-app update flow (GitHub APK download + install) is off.
-        // Updates come only from Cafe Bazaar now.
-        return
+        Thread {
+            val info = RemoteUpdate.fetch() ?: return@Thread
+            if (info.latestVersionCode <= currentVersionCode()) return@Thread
+            if (!info.forced) {
+                val dismissed = getSharedPreferences("aramis_prefs", MODE_PRIVATE)
+                    .getInt("update_dismissed_version", -1)
+                if (dismissed == info.latestVersionCode) return@Thread
+            }
+            runOnUiThread { showBazaarUpdateDialog(info) }
+        }.start()
+    }
+
+    private fun currentVersionCode(): Int {
+        return try {
+            @Suppress("DEPRECATION")
+            packageManager.getPackageInfo(packageName, 0).versionCode
+        } catch (_: Exception) {
+            0
+        }
     }
 
     private fun currentVersionName(): String {
@@ -518,163 +575,46 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Returns > 0 when a is newer than b ("1.0.10" > "1.0.4"). */
-    private fun compareVersions(a: String, b: String): Int {
-        val pa = a.split(".").map { it.toIntOrNull() ?: 0 }
-        val pb = b.split(".").map { it.toIntOrNull() ?: 0 }
-        val n = maxOf(pa.size, pb.size)
-        for (i in 0 until n) {
-            val x = pa.getOrElse(i) { 0 }
-            val y = pb.getOrElse(i) { 0 }
-            if (x != y) return x.compareTo(y)
-        }
-        return 0
-    }
-
     private fun toFaDigits(s: String): String {
         val fa = charArrayOf('۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹')
         return s.map { if (it in '0'..'9') fa[it - '0'] else it }.joinToString("")
     }
 
-    private fun showUpdateDialog(version: String, notes: String, apkUrl: String) {
+    private fun showBazaarUpdateDialog(info: RemoteUpdate.UpdateInfo) {
         if (isFinishing || isDestroyed) return
         val dialog = Dialog(this)
         updateDialog = dialog
-        dialog.setContentView(R.layout.dialog_update)
-        dialog.setCancelable(true)
+        dialog.setContentView(R.layout.dialog_update_bazaar)
+        dialog.setCancelable(!info.forced)
         dialog.window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        dialog.findViewById<TextView>(R.id.update_version).text =
-            "نسخه ${toFaDigits(version)}"
-        val cleanNotes = notes.trim().take(400)
-        dialog.findViewById<TextView>(R.id.update_notes).text =
-            if (cleanNotes.isEmpty()) "بهبودها و رفع اشکال‌ها ✨" else cleanNotes
-        val progressBar = dialog.findViewById<ProgressBar>(R.id.update_progress)
-        val percentText = dialog.findViewById<TextView>(R.id.update_percent)
-        val statusText = dialog.findViewById<TextView>(R.id.update_status)
-        val downloadBtn = dialog.findViewById<Button>(R.id.btn_update_download)
-        val laterBtn = dialog.findViewById<Button>(R.id.btn_update_later)
-        // "Later" just closes the dialog; nothing is remembered, so the
-        // next app launch shows the update again.
-        laterBtn.setOnClickListener { dialog.dismiss() }
-        downloadBtn.setOnClickListener {
-            downloadBtn.isEnabled = false
+        val versionLabel = info.versionName.ifEmpty {
+            info.latestVersionCode.toString()
+        }
+        dialog.findViewById<TextView>(R.id.bazaar_update_version).text =
+            "نسخه ${toFaDigits(versionLabel)}"
+        dialog.findViewById<TextView>(R.id.bazaar_update_message).text =
+            info.message.trim().take(400)
+        val downloadBtn = dialog.findViewById<Button>(R.id.btn_bazaar_download)
+        val laterBtn = dialog.findViewById<Button>(R.id.btn_bazaar_later)
+        if (info.forced) {
             laterBtn.visibility = View.GONE
-            progressBar.visibility = View.VISIBLE
-            percentText.visibility = View.VISIBLE
-            statusText.visibility = View.VISIBLE
-            statusText.text = "⏳ در حال دانلود..."
-            downloadUpdate(apkUrl, progressBar, percentText, statusText, downloadBtn)
+        } else {
+            laterBtn.setOnClickListener {
+                // Remember the dismissed version so the popup does not
+                // nag on every open; a newer version still shows.
+                getSharedPreferences("aramis_prefs", MODE_PRIVATE)
+                    .edit()
+                    .putInt("update_dismissed_version", info.latestVersionCode)
+                    .apply()
+                dialog.dismiss()
+            }
+        }
+        downloadBtn.setOnClickListener {
+            openExternal(info.bazaarUrl)
+            dialog.dismiss()
         }
         dialog.setOnDismissListener { updateDialog = null }
         dialog.show()
-    }
-
-    private fun downloadUpdate(
-        apkUrl: String,
-        progressBar: ProgressBar,
-        percentText: TextView,
-        statusText: TextView,
-        downloadBtn: Button
-    ) {
-        Thread {
-            try {
-                val conn = (URL(apkUrl).openConnection() as HttpURLConnection).apply {
-                    instanceFollowRedirects = true
-                    setRequestProperty("User-Agent", "AramisBeauty-App")
-                    connectTimeout = 10000
-                    readTimeout = 15000
-                }
-                if (conn.responseCode != HttpURLConnection.HTTP_OK) {
-                    throw Exception("HTTP ${conn.responseCode}")
-                }
-                val total = conn.contentLengthLong
-                val dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-                val file = File(dir, "aramis-beauty-update.apk")
-                conn.inputStream.use { input ->
-                    FileOutputStream(file).use { output ->
-                        val buf = ByteArray(8192)
-                        var read: Int
-                        var downloaded = 0L
-                        while (input.read(buf).also { read = it } != -1) {
-                            output.write(buf, 0, read)
-                            downloaded += read
-                            if (total > 0) {
-                                val pct = (downloaded * 100 / total).toInt()
-                                runOnUiThread {
-                                    progressBar.progress = pct
-                                    percentText.text = "٪${toFaDigits(pct.toString())}"
-                                }
-                            }
-                        }
-                        output.flush()
-                    }
-                }
-                runOnUiThread {
-                    statusText.text = "✅ دانلود کامل شد!"
-                    percentText.text = "٪۱۰۰"
-                    progressBar.progress = 100
-                    installApk(file, statusText, downloadBtn)
-                }
-            } catch (_: Exception) {
-                runOnUiThread {
-                    statusText.text = "❌ دانلود ناموفق بود؛ دوباره امتحان کن"
-                    downloadBtn.isEnabled = true
-                    downloadBtn.text = "🔄 تلاش دوباره"
-                }
-            }
-        }.start()
-    }
-
-    private fun installApk(file: File, statusText: TextView, downloadBtn: Button) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
-            !packageManager.canRequestPackageInstalls()
-        ) {
-            // Android 8+: installing from the app needs the
-            // "install unknown apps" permission first.
-            pendingApkFile = file
-            statusText.text = "برای نصب، اجازه‌ی نصب از منابع ناشناس رو بده ✅"
-            downloadBtn.isEnabled = true
-            downloadBtn.text = "⚙️ دادن اجازه و نصب"
-            downloadBtn.setOnClickListener {
-                startActivityForResult(
-                    Intent(
-                        Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                        Uri.parse("package:$packageName")
-                    ),
-                    INSTALL_PERMISSION_REQUEST
-                )
-            }
-            return
-        }
-        launchInstaller(file)
-    }
-
-    private fun launchInstaller(file: File) {
-        try {
-            val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(uri, "application/vnd.android.package-archive")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            startActivity(intent)
-            updateDialog?.dismiss()
-        } catch (_: Exception) {
-            // Installer couldn't open; the dialog stays so the user can retry.
-        }
-    }
-
-    @Deprecated("Used for the install-unknown-apps permission result")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == INSTALL_PERMISSION_REQUEST) {
-            val file = pendingApkFile
-            if (file != null && file.exists() &&
-                (Build.VERSION.SDK_INT < Build.VERSION_CODES.O ||
-                    packageManager.canRequestPackageInstalls())
-            ) {
-                launchInstaller(file)
-            }
-        }
     }
 
     // Real backdrop blur while the drawer is open (API 31+): the content

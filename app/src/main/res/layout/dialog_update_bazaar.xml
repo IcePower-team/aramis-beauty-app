@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- v1.6.9: update dialog that links OUT to Cafe Bazaar. The old
+     APK-download dialog is gone (Bazaar rejects REQUEST_INSTALL_PACKAGES);
+     this dialog has no download UI at all. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -25,7 +28,7 @@
         android:textStyle="bold" />
 
     <TextView
-        android:id="@+id/update_version"
+        android:id="@+id/bazaar_update_version"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
@@ -35,7 +38,7 @@
         android:textSize="15sp" />
 
     <TextView
-        android:id="@+id/update_notes"
+        android:id="@+id/bazaar_update_message"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
@@ -44,52 +47,20 @@
         android:textColor="@color/black"
         android:textSize="14sp" />
 
-    <ProgressBar
-        android:id="@+id/update_progress"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:max="100"
-        android:progressTint="@color/burgundy"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/update_percent"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="6dp"
-        android:text="٪۰"
-        android:textColor="@color/burgundy"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:visibility="gone" />
-
-    <TextView
-        android:id="@+id/update_status"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_marginTop="4dp"
-        android:textColor="@color/gray_text"
-        android:textSize="13sp"
-        android:visibility="gone" />
-
     <Button
-        android:id="@+id/btn_update_download"
+        android:id="@+id/btn_bazaar_download"
         android:layout_width="match_parent"
         android:layout_height="52dp"
         android:layout_marginTop="18dp"
         android:background="@drawable/btn_primary_rounded"
-        android:text="⬇️ دانلود و نصب"
+        android:text="⬇️ دانلود از کافه بازار"
         android:textColor="@color/white"
         android:textSize="16sp"
         android:textStyle="bold"
         app:backgroundTint="@null" />
 
     <Button
-        android:id="@+id/btn_update_later"
+        android:id="@+id/btn_bazaar_later"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginTop="10dp"

@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v1.6.9: beauty routine builder — light glass screen like the
+     quiz/advisor. Steps and search results are added programmatically. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/glass_bg_gradient"
+    android:layoutDirection="rtl"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/glass_pill"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="8dp">
+
+        <ImageButton
+            android:id="@+id/routine_close"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="بستن"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:tint="@color/burgundy_dark" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/vazirmatn"
+                android:text="✦ روتین زیبایی من"
+                android:textColor="@color/burgundy_dark"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:fontFamily="@font/vazirmatn"
+                android:text="قدم‌ها رو بچین، هر روز سر ساعت یادآوری می‌شه 🌸"
+                android:textColor="@color/gray_text"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="40dp"
+            android:layout_height="40dp" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="24dp">
+
+            <!-- Daily reminder time -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="@font/vazirmatn_bold"
+                android:text="⏰ ساعت یادآوری روزانه"
+                android:textColor="@color/burgundy_dark"
+                android:textSize="15sp" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/routine_time_button"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/quiz_button_outline"
+                android:fontFamily="@font/vazirmatn_bold"
+                android:text="ساعت ۲۱:۰۰"
+                android:textColor="@color/gold"
+                android:textSize="16sp"
+                app:backgroundTint="@null" />
+
+            <!-- Add a step: search the catalog -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:fontFamily="@font/vazirmatn_bold"
+                android:text="➕ اضافه کردن قدم (محصول)"
+                android:textColor="@color/burgundy_dark"
+                android:textSize="15sp" />
+
+            <EditText
+                android:id="@+id/routine_search"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/glass_pill"
+                android:fontFamily="@font/vazirmatn"
+                android:hint="نام محصول رو بنویس…"
+                android:inputType="text"
+                android:maxLines="1"
+                android:padding="14dp"
+                android:textColor="@color/burgundy_dark"
+                android:textColorHint="#8A7A80"
+                android:textSize="15sp" />
+
+            <LinearLayout
+                android:id="@+id/routine_search_results"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <!-- The routine's steps -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:fontFamily="@font/vazirmatn_bold"
+                android:text="📋 قدم‌های روتین"
+                android:textColor="@color/burgundy_dark"
+                android:textSize="15sp" />
+
+            <LinearLayout
+                android:id="@+id/routine_steps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="vertical" />
+
+            <TextView
+                android:id="@+id/routine_empty"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:fontFamily="@font/vazirmatn"
+                android:text="هنوز قدمی اضافه نشده؛ از جستجو بالا یک محصول انتخاب کن."
+                android:textColor="@color/gray_text"
+                android:textSize="14sp" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/routine_save"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="24dp"
+                android:background="@drawable/quiz_button_gold"
+                android:fontFamily="@font/vazirmatn_bold"
+                android:text="💾 ذخیره روتین"
+                android:textColor="@color/header_top"
+                android:textSize="15sp"
+                app:backgroundTint="@null" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/routine_delete"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="12dp"
+                android:background="@android:color/transparent"
+                android:fontFamily="@font/vazirmatn"
+                android:text="حذف روتین"
+                android:textColor="@color/gray_text"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/routine_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="16dp"
+                android:fontFamily="@font/vazirmatn"
+                android:textAlignment="center"
+                android:textColor="@color/gray_text"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

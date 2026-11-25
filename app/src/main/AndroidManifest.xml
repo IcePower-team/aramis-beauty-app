@@ -4,6 +4,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
         android:allowBackup="true"
@@ -48,6 +49,28 @@
             android:name=".PrivacyPolicyActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:exported="false" />
+
+        <!-- v1.6.9: flash deals ("پیشنهاد شگفت‌انگیز") — native screen -->
+        <activity
+            android:name=".DealsActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="false" />
+
+        <!-- v1.6.9: beauty routine builder — native screen -->
+        <activity
+            android:name=".RoutineActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden"
+            android:exported="false" />
+
+        <!-- v1.6.9: daily routine reminder. Re-registers the alarm on
+             boot (alarms do not survive a reboot). -->
+        <receiver
+            android:name=".RoutineAlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Shares the downloaded update APK with the system installer -->
         <provider

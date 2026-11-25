@@ -21,4 +21,14 @@
         android:title="@string/nav_home"
         app:showAsAction="always" />
 
+    <!-- v1.6.9 "خبرم کن": only shown on a product page (MainActivity
+         toggles its visibility); subscribes the device to that
+         product's FCM stock/price topics. -->
+    <item
+        android:id="@+id/action_notify"
+        android:icon="@drawable/ic_notification"
+        android:title="خبرم کن"
+        android:visible="false"
+        app:showAsAction="ifRoom" />
+
 </menu>
