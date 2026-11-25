@@ -209,7 +209,7 @@ class RoutineActivity : AppCompatActivity() {
             ).apply { marginStart = dp(8) }
         }
         val remove = ImageButton(this).apply {
-            setImageResource(android.R.drawable.ic_menu_close_clear_cancel)
+            setImageResource(R.drawable.ic_close)
             background = null
             setColorFilter(ContextCompat.getColor(this@RoutineActivity, R.color.gray_text))
             layoutParams = LinearLayout.LayoutParams(dp(36), dp(36))

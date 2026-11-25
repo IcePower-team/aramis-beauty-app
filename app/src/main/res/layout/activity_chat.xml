@@ -23,12 +23,12 @@
 
         <ImageButton
             android:id="@+id/chat_close"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@android:color/transparent"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/btn_close_circle"
             android:contentDescription="بستن"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
-            android:tint="@color/burgundy_dark" />
+            android:scaleType="center"
+            android:src="@drawable/ic_close" />
 
         <LinearLayout
             android:layout_width="0dp"

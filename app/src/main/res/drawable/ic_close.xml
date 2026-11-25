@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Crisp Material-style close icon (v1.6.9 polish): two smooth strokes
+     with round caps, 24dp viewport, so it renders sharp at any density.
+     Replaces the old blurry system raster @android:drawable/ic_menu_close_clear_cancel. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M6.5,6.5 L17.5,17.5" />
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="2.4"
+        android:strokeLineCap="round"
+        android:pathData="M17.5,6.5 L6.5,17.5" />
+</vector>
