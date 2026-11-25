@@ -74,6 +74,7 @@ class MainActivity : AppCompatActivity() {
     private var splashOffline = false
     private var splashStartTime = 0L
     private val splashHandler = Handler(Looper.getMainLooper())
+    private var dealsChipHandler: Handler? = null
     private val requestNotificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { _ -> }
 
@@ -226,6 +227,54 @@ class MainActivity : AppCompatActivity() {
             setCategoriesExpanded(expanded)
             prefs.edit().putBoolean("drawer_categories_expanded", expanded).apply()
         }
+
+        // App features group — same collapsible pattern as categories:
+        // header with a rotating chevron, choice remembered in prefs.
+        // Default expanded on first install.
+        val featuresGroup = findViewById<View>(R.id.features_group)
+        val featuresChevron = findViewById<ImageView>(R.id.features_chevron)
+        fun setFeaturesExpanded(expanded: Boolean) {
+            featuresGroup.visibility = if (expanded) View.VISIBLE else View.GONE
+            featuresChevron.rotation = if (expanded) 180f else 0f
+        }
+        setFeaturesExpanded(prefs.getBoolean("drawer_features_expanded", true))
+        findViewById<View>(R.id.features_header).setOnClickListener {
+            val expanded = featuresGroup.visibility != View.VISIBLE
+            featuresChevron.animate()
+                .rotation(if (expanded) 180f else 0f)
+                .setDuration(250).start()
+            setFeaturesExpanded(expanded)
+            prefs.edit().putBoolean("drawer_features_expanded", expanded).apply()
+        }
+
+        // Live countdown chip on the deals row (cached deals only; hidden
+        // until the deals have been fetched once, and after they end).
+        // Ticks once a second, same as the DealsActivity countdown.
+        val dealsChip = findViewById<TextView>(R.id.deals_countdown_chip)
+        val chipHandler = Handler(Looper.getMainLooper())
+        dealsChipHandler = chipHandler
+        val dealsChipTick = object : Runnable {
+            override fun run() {
+                try {
+                    val cfg = RemoteDeals.loadCached(this@MainActivity)
+                    if (cfg == null) {
+                        dealsChip.visibility = View.GONE
+                    } else {
+                        val remaining = cfg.endsAtMillis - System.currentTimeMillis()
+                        if (remaining <= 0) {
+                            dealsChip.visibility = View.GONE
+                        } else {
+                            dealsChip.visibility = View.VISIBLE
+                            dealsChip.text = formatDealsChip(remaining)
+                        }
+                    }
+                } catch (_: Exception) {
+                    dealsChip.visibility = View.GONE
+                }
+                chipHandler.postDelayed(this, 1000)
+            }
+        }
+        chipHandler.post(dealsChipTick)
 
         // Login / register buttons in the drawer header
         val header = findViewById<View>(R.id.drawer_header)
@@ -638,6 +687,17 @@ class MainActivity : AppCompatActivity() {
         webView.loadUrl(url)
     }
 
+    /** Compact countdown for the deals drawer chip: «⏳ ۲ روز» or «⏳ ۱۲:۳۴:۵۶». */
+    private fun formatDealsChip(millis: Long): String {
+        val totalSeconds = millis / 1000
+        val days = totalSeconds / 86400
+        if (days > 0) return "⏳ ${toFaDigits(days.toString())} روز"
+        val hours = (totalSeconds % 86400) / 3600
+        val minutes = (totalSeconds % 3600) / 60
+        val seconds = totalSeconds % 60
+        return "⏳ ${toFaDigits("%02d:%02d:%02d".format(hours, minutes, seconds))}"
+    }
+
     private fun openExternal(url: String) {
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
@@ -647,6 +707,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        dealsChipHandler?.removeCallbacksAndMessages(null)
         webView.destroy()
         super.onDestroy()
     }
