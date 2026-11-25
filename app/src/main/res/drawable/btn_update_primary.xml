@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modern pink gradient pill for the update dialog CTA. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="0"
+        android:endColor="#D6336C"
+        android:startColor="#E84B82"
+        android:type="linear" />
+    <corners android:radius="27dp" />
+</shape>
