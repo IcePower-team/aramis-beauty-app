@@ -73,6 +73,17 @@ class RoutineAlarmReceiver : BroadcastReceiver() {
             if (c in '0'..'9') "۰۱۲۳۴۵۶۷۸۹"[c - '0'] else c
         }.joinToString("")
 
+    /** One routine step: a catalog product + the label shown for it. */
+    data class Step(val productId: Int, val title: String)
+
+    /** The saved routine: daily time + steps. */
+    data class Routine(
+        val hour: Int,
+        val minute: Int,
+        val enabled: Boolean,
+        val steps: List<Step>
+    )
+
     companion object {
         const val ACTION_REMIND = "ir.aramisbeauty.app.ACTION_ROUTINE_REMINDER"
         const val CHANNEL_ID = "aramis_routine"
@@ -80,14 +91,6 @@ class RoutineAlarmReceiver : BroadcastReceiver() {
         private const val PREFS = "aramis_routine"
         private const val KEY_JSON = "routine_json"
         private const val REQUEST_CODE = 9002
-
-        data class Step(val productId: Int, val title: String)
-        data class Routine(
-            val hour: Int,
-            val minute: Int,
-            val enabled: Boolean,
-            val steps: List<Step>
-        )
 
         /** Load the saved routine, or null when none was ever saved. */
         fun loadRoutine(context: Context): Routine? {
