@@ -1,6 +1,10 @@
 package ir.aramisbeauty.app
 
 import android.Manifest
+import android.animation.Animator
+import android.animation.Keyframe
+import android.animation.ObjectAnimator
+import android.animation.PropertyValuesHolder
 import android.app.Dialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -45,7 +49,6 @@ import com.google.firebase.messaging.FirebaseMessaging
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.android.material.navigation.NavigationView
 
 class MainActivity : AppCompatActivity() {
 
@@ -75,6 +78,9 @@ class MainActivity : AppCompatActivity() {
     private var splashStartTime = 0L
     private val splashHandler = Handler(Looper.getMainLooper())
     private var dealsChipHandler: Handler? = null
+    // Pink heartbeat pulse on the deals countdown chip (see
+    // setDealsChipPulse); cancelled in onDestroy.
+    private var dealsChipPulse: Animator? = null
     private val requestNotificationPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { _ -> }
 
@@ -162,26 +168,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val navView = findViewById<NavigationView>(R.id.nav_view)
-        navView.setNavigationItemSelectedListener { item: MenuItem ->
-            when (item.itemId) {
-                R.id.nav_makeup_face -> loadUrl("https://aramis-beauty.ir/category/3")
-                R.id.nav_makeup_eyes -> loadUrl("https://aramis-beauty.ir/category/4")
-                R.id.nav_makeup_brows -> loadUrl("https://aramis-beauty.ir/category/5")
-                R.id.nav_makeup_lips -> loadUrl("https://aramis-beauty.ir/category/6")
-                R.id.nav_makeup_hair -> loadUrl("https://aramis-beauty.ir/category/7")
-                R.id.nav_skincare -> loadUrl("https://aramis-beauty.ir/category/11")
-                R.id.nav_lens -> loadUrl("https://aramis-beauty.ir/category/22")
-                R.id.nav_bracelet -> loadUrl("https://aramis-beauty.ir/category/35")
-                R.id.nav_necklace -> loadUrl("https://aramis-beauty.ir/category/36")
-                R.id.nav_ring -> loadUrl("https://aramis-beauty.ir/category/38")
-                R.id.nav_watch -> loadUrl("https://aramis-beauty.ir/category/49")
-            }
-            drawer.closeDrawers()
-            true
-        }
-
-        // Fixed home / cart rows above the scrolling categories list
+        // Categories live on the site homepage, so the drawer has no
+        // categories section (v1.6.9 fix: it was pushed below the fold
+        // with no way to scroll to it).
         findViewById<View>(R.id.row_home).setOnClickListener {
             loadUrl(HOME_URL)
             drawer.closeDrawers()
@@ -207,30 +196,11 @@ class MainActivity : AppCompatActivity() {
             drawer.closeDrawers()
         }
 
-        // Categories header — tap to expand / collapse the list.
-        // Chevron points down when collapsed, up when expanded; the choice
-        // is remembered so the drawer opens the way the user left it.
         val prefs = getSharedPreferences("aramis_prefs", MODE_PRIVATE)
-        val categoriesSpacer = findViewById<View>(R.id.categories_spacer)
-        val categoriesChevron = findViewById<ImageView>(R.id.categories_chevron)
-        fun setCategoriesExpanded(expanded: Boolean) {
-            navView.visibility = if (expanded) View.VISIBLE else View.GONE
-            categoriesSpacer.visibility = if (expanded) View.GONE else View.VISIBLE
-            categoriesChevron.rotation = if (expanded) 180f else 0f
-        }
-        setCategoriesExpanded(prefs.getBoolean("drawer_categories_expanded", true))
-        findViewById<View>(R.id.categories_header).setOnClickListener {
-            val expanded = navView.visibility != View.VISIBLE
-            categoriesChevron.animate()
-                .rotation(if (expanded) 180f else 0f)
-                .setDuration(250).start()
-            setCategoriesExpanded(expanded)
-            prefs.edit().putBoolean("drawer_categories_expanded", expanded).apply()
-        }
 
-        // App features group — same collapsible pattern as categories:
-        // header with a rotating chevron, choice remembered in prefs.
-        // Default expanded on first install.
+        // App features group — collapsible header with a rotating
+        // chevron, choice remembered in prefs. Default expanded on
+        // first install.
         val featuresGroup = findViewById<View>(R.id.features_group)
         val featuresChevron = findViewById<ImageView>(R.id.features_chevron)
         fun setFeaturesExpanded(expanded: Boolean) {
@@ -271,6 +241,7 @@ class MainActivity : AppCompatActivity() {
                 } catch (_: Exception) {
                     dealsChip.visibility = View.GONE
                 }
+                setDealsChipPulse(dealsChip, dealsChip.visibility == View.VISIBLE)
                 chipHandler.postDelayed(this, 1000)
             }
         }
@@ -687,6 +658,57 @@ class MainActivity : AppCompatActivity() {
         webView.loadUrl(url)
     }
 
+    // Pink heartbeat pulse on the deals countdown chip: a slow lub-dub
+    // (scale + alpha) repeating about once every 1.6s — one double beat,
+    // then a rest, so it reads as a heartbeat rather than a blink.
+    // Runs only while the chip is visible; the once-a-second countdown
+    // tick only sets the text, so it never fights the animation.
+    // Transform-only animation on one small view: cheap on battery.
+    private fun setDealsChipPulse(chip: TextView, running: Boolean) {
+        if (running) {
+            if (dealsChipPulse?.isRunning == true) return
+            // Heartbeat keyframes: beat (up-down), smaller beat, rest.
+            val scaleX = PropertyValuesHolder.ofKeyframe(
+                "scaleX",
+                Keyframe.ofFloat(0f, 1f),
+                Keyframe.ofFloat(0.08f, 1.12f),
+                Keyframe.ofFloat(0.16f, 1f),
+                Keyframe.ofFloat(0.24f, 1.07f),
+                Keyframe.ofFloat(0.32f, 1f),
+                Keyframe.ofFloat(1f, 1f)
+            )
+            val scaleY = PropertyValuesHolder.ofKeyframe(
+                "scaleY",
+                Keyframe.ofFloat(0f, 1f),
+                Keyframe.ofFloat(0.08f, 1.12f),
+                Keyframe.ofFloat(0.16f, 1f),
+                Keyframe.ofFloat(0.24f, 1.07f),
+                Keyframe.ofFloat(0.32f, 1f),
+                Keyframe.ofFloat(1f, 1f)
+            )
+            val alpha = PropertyValuesHolder.ofKeyframe(
+                "alpha",
+                Keyframe.ofFloat(0f, 1f),
+                Keyframe.ofFloat(0.08f, 0.88f),
+                Keyframe.ofFloat(0.16f, 1f),
+                Keyframe.ofFloat(0.24f, 0.94f),
+                Keyframe.ofFloat(0.32f, 1f),
+                Keyframe.ofFloat(1f, 1f)
+            )
+            dealsChipPulse = ObjectAnimator.ofPropertyValuesHolder(chip, scaleX, scaleY, alpha).apply {
+                duration = 1600
+                repeatCount = ObjectAnimator.INFINITE
+                start()
+            }
+        } else {
+            dealsChipPulse?.cancel()
+            dealsChipPulse = null
+            chip.scaleX = 1f
+            chip.scaleY = 1f
+            chip.alpha = 1f
+        }
+    }
+
     /** Compact countdown for the deals drawer chip: «⏳ ۲ روز» or «⏳ ۱۲:۳۴:۵۶». */
     private fun formatDealsChip(millis: Long): String {
         val totalSeconds = millis / 1000
@@ -708,6 +730,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         dealsChipHandler?.removeCallbacksAndMessages(null)
+        dealsChipPulse?.cancel()
+        dealsChipPulse = null
         webView.destroy()
         super.onDestroy()
     }

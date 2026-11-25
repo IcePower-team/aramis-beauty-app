@@ -144,7 +144,23 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-        <!-- Fixed quick actions: home + cart side by side, quiz below (never scroll away) -->
+        <!-- Drawer body scrolls when its content exceeds the screen
+             (v1.6.9 fix: the categories section used to be pushed below
+             the fold with no way to reach it). Header stays fixed at
+             the top, social footer pinned at the bottom. -->
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+        <!-- Quick actions: home + cart, then the features group -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -416,10 +432,11 @@
                     </LinearLayout>
 
                     <TextView
-                        android:layout_width="0dp"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="10dp"
-                        android:layout_weight="1"
+                        android:ellipsize="end"
+                        android:maxLines="1"
                         android:text="@string/nav_deals"
                         android:textColor="@color/drawer_text"
                         android:textSize="14sp"
@@ -429,12 +446,13 @@
                         android:id="@+id/deals_countdown_chip"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
                         android:background="@drawable/glass_pill"
                         android:paddingStart="8dp"
                         android:paddingEnd="8dp"
                         android:paddingTop="3dp"
                         android:paddingBottom="3dp"
-                        android:textColor="@color/gold"
+                        android:textColor="@color/deals_pink"
                         android:textSize="11sp"
                         android:textStyle="bold"
                         android:visibility="gone" />
@@ -485,70 +503,8 @@
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
-
-        <!-- Categories section header — tap to expand / collapse the list -->
-        <LinearLayout
-            android:id="@+id/categories_header"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="?attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center_vertical"
-            android:minHeight="48dp"
-            android:orientation="horizontal"
-            android:paddingStart="20dp"
-            android:paddingEnd="16dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="✦ دسته‌بندی‌ها"
-                android:textColor="@color/gold"
-                android:textSize="13sp"
-                android:textStyle="bold" />
-
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_marginStart="10dp"
-                android:layout_weight="1"
-                android:alpha="0.4"
-                android:background="@color/gold" />
-
-            <ImageView
-                android:id="@+id/categories_chevron"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginStart="8dp"
-                android:contentDescription="باز و بسته کردن دسته‌بندی‌ها"
-                android:src="@drawable/ic_chevron_down"
-                android:tint="@color/gold" />
-        </LinearLayout>
-
-        <!-- Only the categories list scrolls -->
-        <com.google.android.material.navigation.NavigationView
-            android:id="@+id/nav_view"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            app:itemBackground="@drawable/drawer_item_background"
-            app:itemHorizontalPadding="12dp"
-            app:itemIconPadding="12dp"
-            app:itemIconTint="@color/drawer_item_text"
-            app:itemTextColor="@color/drawer_item_text"
-            app:menu="@menu/drawer_categories_menu" />
-
-        <!-- Keeps the footer pinned to the bottom when the list is collapsed -->
-        <View
-            android:id="@+id/categories_spacer"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:visibility="gone" />
+            </LinearLayout>
+        </ScrollView>
 
         <LinearLayout
             android:layout_width="match_parent"
