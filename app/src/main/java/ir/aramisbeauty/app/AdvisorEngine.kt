@@ -130,7 +130,7 @@ object AdvisorEngine {
                 products.firstOrNull { it.id == 474 }
             )
             return Reply(
-                "اسپری فیکس شیگلم الان ۲۱٪ تخفیف داره! 🎉 اینا هم ارزون‌ترین‌هستن 👇",
+                "پیشنهادهای امروز فروشگاه 👇",
                 picks
             )
         }
