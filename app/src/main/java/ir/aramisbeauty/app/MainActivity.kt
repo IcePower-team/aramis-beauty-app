@@ -71,6 +71,12 @@ class MainActivity : AppCompatActivity() {
     // Product id of the page currently shown in the WebView, if any —
     // drives the "خبرم کن" toolbar button.
     private var currentProductId: Int? = null
+    // True once a live check has confirmed the current product is out
+    // of stock — the bell only shows then, never on in-stock pages.
+    private var currentProductOutOfStock: Boolean = false
+    // Generation counter so a slow live check for a page the user has
+    // already left cannot flip the bell for the new page.
+    private var notifyCheckGen: Int = 0
     // Animated launch splash (shown while the site loads, then fades out)
     private var splashView: View? = null
     private var splashHidden = false
@@ -508,7 +514,7 @@ class MainActivity : AppCompatActivity() {
     override fun onPrepareOptionsMenu(menu: Menu): Boolean {
         val notifyItem = menu.findItem(R.id.action_notify)
         val id = currentProductId
-        notifyItem?.isVisible = id != null
+        notifyItem?.isVisible = id != null && currentProductOutOfStock
         if (id != null) {
             notifyItem?.title =
                 if (NotifyMe.isSubscribed(this, id)) "🔔 خبرت می‌کنم" else "🔔 خبرم کن"
@@ -536,8 +542,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     // "خبرم کن": the toolbar bell is only visible on a product page
-    // (https://aramis-beauty.ir/product/<id>); everywhere else the
-    // button hides so it never confuses.
+    // (https://aramis-beauty.ir/product/<id>) whose live stock check
+    // says OUT of stock. In-stock pages never show it, and neither do
+    // pages whose stock could not be confirmed (fetch failed) — the
+    // bell only appears on a confirmed out-of-stock result.
     private fun updateNotifyMenu() {
         val url = try {
             webView.url
@@ -549,7 +557,20 @@ class MainActivity : AppCompatActivity() {
         val id = match?.groupValues?.getOrNull(1)?.toIntOrNull()
         if (id != currentProductId) {
             currentProductId = id
+            currentProductOutOfStock = false
             invalidateOptionsMenu()
+            if (id != null) {
+                val gen = ++notifyCheckGen
+                Thread {
+                    val live = LiveCheck.fetch(id)
+                    runOnUiThread {
+                        if (gen == notifyCheckGen && currentProductId == id) {
+                            currentProductOutOfStock = live != null && !live.inStock
+                            invalidateOptionsMenu()
+                        }
+                    }
+                }.start()
+            }
         }
     }
 

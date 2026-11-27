@@ -21,14 +21,14 @@
         android:title="@string/nav_home"
         app:showAsAction="always" />
 
-    <!-- v1.6.9 "خبرم کن": only shown on a product page (MainActivity
-         toggles its visibility); subscribes the device to that
-         product's FCM stock/price topics. -->
+    <!-- v1.6.10 "خبرم کن": only shown on an out-of-stock product page
+         (MainActivity toggles its visibility after a live stock check);
+         always in the toolbar, never in the overflow (three-dot) menu. -->
     <item
         android:id="@+id/action_notify"
         android:icon="@drawable/ic_notification"
         android:title="خبرم کن"
         android:visible="false"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always" />
 
 </menu>
